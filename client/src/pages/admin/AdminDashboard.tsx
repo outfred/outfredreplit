@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<
-    "users" | "merchants" | "products" | "brands" | "navigation" | "ai" | "metrics" | "config"
+    "users" | "merchants" | "products" | "brands" | "navigation" | "footer" | "ai" | "metrics" | "config"
   >("users");
   
   // Merchant Dialog State
@@ -324,6 +324,15 @@ export default function AdminDashboard() {
           >
             <BookOpen className="w-4 h-4 me-2" />
             Navigation
+          </Button>
+          <Button
+            variant={activeView === "footer" ? "default" : "ghost"}
+            onClick={() => setActiveView("footer")}
+            className="rounded-xl whitespace-nowrap"
+            data-testid="button-nav-footer"
+          >
+            <FileText className="w-4 h-4 me-2" />
+            Footer
           </Button>
           <Button
             variant={activeView === "ai" ? "default" : "ghost"}
@@ -833,6 +842,9 @@ export default function AdminDashboard() {
             </GlassCard>
           </div>
         )}
+
+        {/* Footer Config View */}
+        {activeView === "footer" && <FooterConfigView />}
 
         {/* Configuration View */}
         {activeView === "config" && (
@@ -1679,6 +1691,156 @@ function BrandDialog({
         </Form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Footer Config View Component
+function FooterConfigView() {
+  const { toast } = useToast();
+  const [copyrightText, setCopyrightText] = useState("");
+  const [socials, setSocials] = useState({
+    instagram: "",
+    facebook: "",
+    twitter: "",
+    tiktok: "",
+    youtube: "",
+    linkedin: "",
+  });
+
+  const { data: config, isLoading } = useQuery<{
+    id: string;
+    copyrightText: string;
+    socialLinks: typeof socials;
+  }>({
+    queryKey: ["/api/footer-config"],
+  });
+
+  useEffect(() => {
+    if (config) {
+      setCopyrightText(config.copyrightText || "");
+      setSocials(config.socialLinks || {});
+    }
+  }, [config]);
+
+  const updateConfig = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", "/api/admin/footer-config", {
+        copyrightText,
+        socialLinks: socials,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/footer-config"] });
+      toast({ title: "Success", description: "Footer config updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update footer config", variant: "destructive" });
+    },
+  });
+
+  if (isLoading) {
+    return <GlassCard className="p-8 text-center">Loading footer config...</GlassCard>;
+  }
+
+  return (
+    <div className="max-w-3xl">
+      <h2 className="text-2xl font-bold mb-6">Footer Configuration</h2>
+      
+      <GlassCard className="p-6 space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="copyright">Copyright Text</Label>
+          <Input
+            id="copyright"
+            value={copyrightText}
+            onChange={(e) => setCopyrightText(e.target.value)}
+            placeholder="© 2025 Outfred. All rights reserved."
+            data-testid="input-copyright"
+          />
+        </div>
+
+        <div className="space-y-3 border-t border-white/10 pt-4">
+          <Label className="text-base">Social Media Links</Label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="instagram" className="text-xs text-muted-foreground">Instagram</Label>
+              <Input
+                id="instagram"
+                value={socials.instagram || ""}
+                onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
+                placeholder="https://instagram.com/outfred"
+                data-testid="input-footer-instagram"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="facebook" className="text-xs text-muted-foreground">Facebook</Label>
+              <Input
+                id="facebook"
+                value={socials.facebook || ""}
+                onChange={(e) => setSocials({ ...socials, facebook: e.target.value })}
+                placeholder="https://facebook.com/outfred"
+                data-testid="input-footer-facebook"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="twitter" className="text-xs text-muted-foreground">Twitter/X</Label>
+              <Input
+                id="twitter"
+                value={socials.twitter || ""}
+                onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
+                placeholder="https://twitter.com/outfred"
+                data-testid="input-footer-twitter"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tiktok" className="text-xs text-muted-foreground">TikTok</Label>
+              <Input
+                id="tiktok"
+                value={socials.tiktok || ""}
+                onChange={(e) => setSocials({ ...socials, tiktok: e.target.value })}
+                placeholder="https://tiktok.com/@outfred"
+                data-testid="input-footer-tiktok"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="youtube" className="text-xs text-muted-foreground">YouTube</Label>
+              <Input
+                id="youtube"
+                value={socials.youtube || ""}
+                onChange={(e) => setSocials({ ...socials, youtube: e.target.value })}
+                placeholder="https://youtube.com/outfred"
+                data-testid="input-footer-youtube"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="linkedin" className="text-xs text-muted-foreground">LinkedIn</Label>
+              <Input
+                id="linkedin"
+                value={socials.linkedin || ""}
+                onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
+                placeholder="https://linkedin.com/company/outfred"
+                data-testid="input-footer-linkedin"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t border-white/10">
+          <Button
+            onClick={() => updateConfig.mutate()}
+            disabled={updateConfig.isPending}
+            data-testid="button-save-footer"
+          >
+            {updateConfig.isPending ? "Saving..." : "Save Footer Config"}
+          </Button>
+        </div>
+      </GlassCard>
+    </div>
   );
 }
 

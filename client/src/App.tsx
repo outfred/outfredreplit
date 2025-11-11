@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/layout/Navbar";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Footer from "@/components/Footer";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -72,8 +73,13 @@ function App() {
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
-              <Navbar />
-              <Router />
+              <div className="flex flex-col min-h-screen">
+                <Navbar />
+                <main className="flex-1">
+                  <Router />
+                </main>
+                <Footer />
+              </div>
               <Toaster />
             </AuthProvider>
           </LanguageProvider>

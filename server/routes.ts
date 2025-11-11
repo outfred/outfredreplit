@@ -1142,6 +1142,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== FOOTER CONFIG ROUTES =====
+  
+  // Get footer config (public)
+  app.get("/api/footer-config", async (req, res) => {
+    const config = await storage.getFooterConfig();
+    if (!config) {
+      return res.json({
+        id: "singleton",
+        copyrightText: "© 2025 Outfred. All rights reserved.",
+        socialLinks: {},
+        updatedAt: new Date(),
+      });
+    }
+    res.json(config);
+  });
+
+  // Update footer config (admin only)
+  app.patch("/api/admin/footer-config", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const updates: any = {};
+      if (req.body.copyrightText !== undefined) updates.copyrightText = req.body.copyrightText;
+      if (req.body.socialLinks !== undefined) updates.socialLinks = req.body.socialLinks;
+
+      const config = await storage.updateFooterConfig(updates);
+      res.json(config);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to update footer config" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
