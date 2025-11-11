@@ -95,23 +95,31 @@
   - Navbar Component: Fetches from `/api/nav-links` with bilingual rendering (language === "ar" ? labelAr : labelEn)
   - Admin Dashboard: Navigation tab added with placeholder UI ("Coming soon")
   - Architect Review: PASS - Navbar reads from DB, bilingual support works, no TypeScript errors
+- ✅ **Footer CMS** (Task 9):
+  - Database Schema: Migrated `copyrightText` → `copyrightTextEn` + `copyrightTextAr` (SQL ALTER TABLE)
+  - Backend: GET /api/footer-config (public), PATCH /api/admin/footer-config (admin-only)
+  - Footer Component: Bilingual rendering with LanguageContext integration
+  - FooterConfigView: Admin UI with En/Ar copyright inputs + 6 social links (Instagram, Facebook, Twitter, TikTok, YouTube, LinkedIn)
+  - Admin Dashboard: Footer tab added with FileText icon
+  - Bug Fix: MerchantDialog infinite loop resolved (useEffect wrapper for form.reset)
+  - Architect Review: PASS - Bilingual schema, secure endpoints, LanguageContext integration, query invalidation correct
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
-- **Database**: Schema updated with CMS tables, brands migrated to bilingual ✅  
+- **Database**: Schema updated with bilingual CMS tables (nav_links, footer_config) ✅  
 - **Frontend**: Home, Product, Admin, OutfitBuilder pages integrated with real data ✅
 - **Backend**: All API routes implemented, registerRoutes hot-reload safe ✅
 - **Authentication**: Complete with protected routes and RBAC ✅
 - **AI**: Migrated to Gemini API (text/image embeddings, outfit suggestions) ✅
 - **Outfit Builder**: Complete with AI form, Gemini integration, product display ✅
 - **Navigation CMS**: Navbar reads from DB with bilingual support (En/Ar), Admin tab exists ✅
-- **Integration Progress**: 8/11 tasks completed (Tasks 1-8)
+- **Footer CMS**: Bilingual footer with admin controls (En/Ar copyright + social links) ✅
+- **Integration Progress**: 9/11 tasks completed (Tasks 1-9)
 
-## Next Steps (Task 9+)
+## Next Steps (Task 10+)
 1. **Header Navigation CRUD UI** (Enhancement): Build full admin CRUD interface for navigation links (create/edit/delete/reorder) - currently placeholder
-2. **Footer CMS** (Task 9): Social links + copyright text editable from admin
-3. **Static Pages** (Task 10): Privacy Policy + Contact Us with WYSIWYG editor
-4. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
+2. **Static Pages** (Task 10): Privacy Policy + Contact Us with WYSIWYG editor
+3. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
 
 ## Running the Project
 ```bash
