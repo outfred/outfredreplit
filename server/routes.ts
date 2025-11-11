@@ -455,6 +455,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CSV Import Products (admin/owner only)
+  app.post("/api/admin/products/import-csv", authMiddleware, requireRole("admin", "owner"), upload.single("csv"), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No CSV file provided" });
+      }
+
+      const { merchantId } = req.body;
+      if (!merchantId) {
+        return res.status(400).json({ error: "merchantId is required" });
+      }
+
+      // Validate merchant exists
+      const merchant = await storage.getMerchant(merchantId);
+      if (!merchant) {
+        return res.status(404).json({ error: "Merchant not found" });
+      }
+
+      // Parse CSV
+      const { parse } = await import("csv-parse/sync");
+      const records = parse(req.file.buffer, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      });
+
+      if (records.length === 0) {
+        return res.status(400).json({ error: "CSV file is empty" });
+      }
+
+      if (records.length > 1000) {
+        return res.status(400).json({ error: "CSV file too large (max 1000 products)" });
+      }
+
+      // Validate and transform records
+      const validatedProducts: InsertProduct[] = [];
+      const failed: Array<{ row: number; error: string }> = [];
+
+      for (let i = 0; i < records.length; i++) {
+        const row = records[i];
+        try {
+          // Map CSV fields to Product schema
+          const product: InsertProduct = {
+            merchantId,
+            titleEn: row.titleEn || row.title_en || "",
+            titleAr: row.titleAr || row.title_ar || "",
+            price: parseFloat(row.price || "0"),
+            brandId: row.brandId || row.brand_id,
+            colors: row.colors ? row.colors.split(",").map((c: string) => c.trim()) : [],
+            sizes: row.sizes ? row.sizes.split(",").map((s: string) => s.trim()) : [],
+            tags: row.tags ? row.tags.split(",").map((t: string) => t.trim()) : [],
+            images: row.images ? row.images.split(",").map((i: string) => i.trim()) : [],
+            published: row.published === "true" || row.published === "1" || false,
+            gender: row.gender || "unisex",
+            fit: row.fit || "regular",
+          };
+
+          // Validate required fields
+          if (!product.titleEn || !product.titleAr) {
+            failed.push({ row: i + 1, error: "Missing titleEn or titleAr" });
+            continue;
+          }
+
+          if (!product.brandId) {
+            failed.push({ row: i + 1, error: "Missing brandId" });
+            continue;
+          }
+
+          if (!product.price || product.price <= 0) {
+            failed.push({ row: i + 1, error: "Invalid price" });
+            continue;
+          }
+
+          // Validate brand exists
+          const brand = await storage.getBrand(product.brandId);
+          if (!brand) {
+            failed.push({ row: i + 1, error: `Brand not found: ${product.brandId}` });
+            continue;
+          }
+
+          validatedProducts.push(product);
+        } catch (err: any) {
+          failed.push({ row: i + 1, error: err.message || "Validation failed" });
+        }
+      }
+
+      // Bulk insert validated products
+      const created = await storage.bulkCreateProducts(validatedProducts);
+
+      res.json({
+        imported: created.length,
+        failed: failed.length,
+        count: created.length,
+        errors: failed,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to import CSV" });
+    }
+  });
+
   // Get merchant products
   app.get("/api/merchant/products", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {

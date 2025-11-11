@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertMerchantSchema } from "@shared/schema";
 import { z } from "zod";
-import type { User, Merchant, Brand } from "@shared/schema";
+import type { User, Merchant, Brand, Product } from "@shared/schema";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowButton } from "@/components/ui/glow-button";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<
-    "users" | "merchants" | "brands" | "ai" | "metrics" | "config"
+    "users" | "merchants" | "products" | "brands" | "ai" | "metrics" | "config"
   >("users");
   
   // Merchant Dialog State
@@ -74,6 +74,18 @@ export default function AdminDashboard() {
     merchantName?: string;
   }>({ open: false });
 
+  // CSV Import State
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [selectedMerchantForImport, setSelectedMerchantForImport] = useState<string>("");
+
+  // Product Filter & Dialog State
+  const [productMerchantFilter, setProductMerchantFilter] = useState<string>("");
+  const [deleteProductConfirm, setDeleteProductConfirm] = useState<{
+    open: boolean;
+    productId?: string;
+    productName?: string;
+  }>({ open: false });
+
   // Fetch Users (also needed for merchant owner selection)
   const { data: usersData = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
@@ -84,6 +96,28 @@ export default function AdminDashboard() {
   const { data: merchantsData = [], isLoading: merchantsLoading } = useQuery<Merchant[]>({
     queryKey: ["/api/admin/merchants"],
     enabled: activeView === "merchants",
+  });
+
+  // Fetch Products (with merchant filter)
+  const { data: productsData = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products", productMerchantFilter],
+    queryFn: async () => {
+      const url = productMerchantFilter 
+        ? `/api/products?merchantId=${productMerchantFilter}`
+        : "/api/products";
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch products");
+      return res.json();
+    },
+    enabled: activeView === "products",
+  });
+
+  // Fetch Merchants (also needed for CSV import merchant selection)
+  const merchantsForImport = useQuery<Merchant[]>({
+    queryKey: ["/api/admin/merchants"],
+    enabled: activeView === "products" || csvImportOpen,
   });
 
   // Fetch Brands
@@ -169,6 +203,36 @@ export default function AdminDashboard() {
     },
   });
 
+  // Delete Product Mutation
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/products/${id}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: t("success"), description: "Product deleted successfully" });
+      setDeleteProductConfirm({ open: false });
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to delete product", variant: "destructive" });
+    },
+  });
+
+  // Toggle Publish Product Mutation
+  const togglePublish = useMutation({
+    mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/products/${id}`, { published });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: t("success"), description: "Product updated successfully" });
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to update product", variant: "destructive" });
+    },
+  });
+
   const users = usersData;
   const merchants = merchantsData;
   const brands = brandsData;
@@ -207,6 +271,15 @@ export default function AdminDashboard() {
           >
             <Store className="w-4 h-4 me-2" />
             {t("merchants")}
+          </Button>
+          <Button
+            variant={activeView === "products" ? "default" : "ghost"}
+            onClick={() => setActiveView("products")}
+            className="rounded-xl whitespace-nowrap"
+            data-testid="button-nav-products"
+          >
+            <Database className="w-4 h-4 me-2" />
+            {t("products")}
           </Button>
           <Button
             variant={activeView === "brands" ? "default" : "ghost"}
@@ -289,6 +362,91 @@ export default function AdminDashboard() {
                 </TableBody>
               </Table>
             </GlassCard>
+          </div>
+        )}
+
+        {/* Products View */}
+        {activeView === "products" && (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">{t("products")}</h2>
+              <div className="flex gap-2">
+                <Select value={productMerchantFilter} onValueChange={setProductMerchantFilter}>
+                  <SelectTrigger className="w-60" data-testid="select-product-merchant-filter">
+                    <SelectValue placeholder="All Merchants" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover/95 backdrop-blur-xl border-popover-border">
+                    <SelectItem value="">All Merchants</SelectItem>
+                    {merchantsForImport.data?.map((merchant) => (
+                      <SelectItem key={merchant.id} value={merchant.id}>
+                        {merchant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <GlowButton 
+                  variant="outline" 
+                  onClick={() => setCsvImportOpen(true)}
+                  data-testid="button-import-csv"
+                >
+                  <Database className="w-4 h-4 me-2" />
+                  Import CSV
+                </GlowButton>
+              </div>
+            </div>
+
+            {productsLoading ? (
+              <GlassCard className="p-8 text-center">Loading products...</GlassCard>
+            ) : (
+              <GlassCard className="overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10">
+                      <TableHead>{t("name")}</TableHead>
+                      <TableHead>Brand</TableHead>
+                      <TableHead>{t("price")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                      <TableHead className="text-end">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {productsData.map((product) => (
+                      <TableRow key={product.id} className="border-white/10" data-testid={`row-product-${product.id}`}>
+                        <TableCell className="font-medium">{product.titleEn}</TableCell>
+                        <TableCell>{product.brandId}</TableCell>
+                        <TableCell>{product.price} EGP</TableCell>
+                        <TableCell>
+                          <Badge variant={product.published ? "default" : "secondary"}>
+                            {product.published ? "Published" : "Draft"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-end">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => togglePublish.mutate({ id: product.id, published: !product.published })}
+                              disabled={togglePublish.isPending}
+                              data-testid={`button-toggle-publish-${product.id}`}
+                            >
+                              {product.published ? <ShieldBan className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => setDeleteProductConfirm({ open: true, productId: product.id, productName: product.titleEn })}
+                              data-testid={`button-delete-product-${product.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </GlassCard>
+            )}
           </div>
         )}
 
@@ -689,7 +847,197 @@ export default function AdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* CSV Import Dialog */}
+      <CSVImportDialog
+        open={csvImportOpen}
+        onClose={() => setCsvImportOpen(false)}
+        merchants={merchantsForImport.data || []}
+        selectedMerchant={selectedMerchantForImport}
+        onMerchantChange={setSelectedMerchantForImport}
+      />
+
+      {/* Delete Product Confirmation */}
+      <Dialog open={deleteProductConfirm.open} onOpenChange={(open) => setDeleteProductConfirm({ ...deleteProductConfirm, open })}>
+        <DialogContent className="bg-card/95 backdrop-blur-xl border-card-border">
+          <DialogHeader>
+            <DialogTitle>Delete Product</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteProductConfirm.productName}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteProductConfirm({ open: false })}
+              disabled={deleteProduct.isPending}
+              data-testid="button-cancel-delete-product"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteProductConfirm.productId && deleteProduct.mutate(deleteProductConfirm.productId)}
+              disabled={deleteProduct.isPending}
+              data-testid="button-confirm-delete-product"
+            >
+              {deleteProduct.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+// CSV Import Dialog Component
+function CSVImportDialog({
+  open,
+  onClose,
+  merchants,
+  selectedMerchant,
+  onMerchantChange,
+}: {
+  open: boolean;
+  onClose: () => void;
+  merchants: Merchant[];
+  selectedMerchant: string;
+  onMerchantChange: (id: string) => void;
+}) {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [csvFile, setCSVFile] = useState<File | null>(null);
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      if (!csvFile || !selectedMerchant) {
+        throw new Error("Missing CSV file or merchant selection");
+      }
+
+      const formData = new FormData();
+      formData.append("csv", csvFile);
+      formData.append("merchantId", selectedMerchant);
+
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/admin/products/import-csv", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to import CSV");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ 
+        title: t("success"), 
+        description: `Imported ${data.count || 0} products successfully` 
+      });
+      onClose();
+      setCSVFile(null);
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: t("error"), 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === "text/csv") {
+      setCSVFile(file);
+    } else {
+      toast({ 
+        title: t("error"), 
+        description: "Please select a valid CSV file", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="bg-card/95 backdrop-blur-xl border-card-border max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Import Products from CSV</DialogTitle>
+          <DialogDescription>
+            Upload a CSV file with product data. Required columns: titleEn, titleAr, price, brandId
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="merchant-select">Select Merchant</Label>
+            <Select value={selectedMerchant} onValueChange={onMerchantChange}>
+              <SelectTrigger id="merchant-select" data-testid="select-csv-merchant">
+                <SelectValue placeholder="Choose merchant" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover/95 backdrop-blur-xl border-popover-border">
+                {merchants.map((merchant) => (
+                  <SelectItem key={merchant.id} value={merchant.id}>
+                    {merchant.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="csv-file">CSV File</Label>
+            <Input
+              id="csv-file"
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              data-testid="input-csv-file"
+            />
+            {csvFile && (
+              <p className="text-sm text-muted-foreground">
+                Selected: {csvFile.name}
+              </p>
+            )}
+          </div>
+
+          <div className="bg-muted/50 p-3 rounded-lg text-sm">
+            <p className="font-semibold mb-1">CSV Format Example:</p>
+            <code className="text-xs">
+              titleEn,titleAr,price,brandId,colors,sizes<br/>
+              Hoodie,هودي,599,brand-id-here,"Black,Gray","S,M,L"
+            </code>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={importMutation.isPending}
+            data-testid="button-cancel-import"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={() => importMutation.mutate()}
+            disabled={importMutation.isPending || !csvFile || !selectedMerchant}
+            data-testid="button-submit-import"
+          >
+            {importMutation.isPending ? "Importing..." : "Import"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

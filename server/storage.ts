@@ -58,6 +58,7 @@ export interface IStorage {
   // Products
   getProduct(id: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
+  bulkCreateProducts(products: InsertProduct[]): Promise<Product[]>;
   updateProduct(id: string, updates: Partial<Product>): Promise<Product>;
   deleteProduct(id: string): Promise<void>;
   listProducts(filters?: {
@@ -226,6 +227,16 @@ export class DatabaseStorage implements IStorage {
     const [created] = await db
       .insert(products)
       .values(product)
+      .returning();
+    return created;
+  }
+
+  async bulkCreateProducts(productsToCreate: InsertProduct[]): Promise<Product[]> {
+    if (productsToCreate.length === 0) return [];
+    
+    const created = await db
+      .insert(products)
+      .values(productsToCreate)
       .returning();
     return created;
   }
