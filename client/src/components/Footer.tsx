@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Instagram, Facebook, Twitter, Youtube, Linkedin } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FooterConfig {
   id: string;
-  copyrightText: string;
+  copyrightTextEn: string;
+  copyrightTextAr: string;
   socialLinks: {
     instagram?: string;
     facebook?: string;
@@ -17,12 +19,17 @@ interface FooterConfig {
 }
 
 export default function Footer() {
+  const { language } = useLanguage();
   const { data: config } = useQuery<FooterConfig>({
     queryKey: ["/api/footer-config"],
   });
 
   const socialLinks = config?.socialLinks || {};
   const hasSocialLinks = Object.values(socialLinks).some((link) => link);
+  
+  const copyrightText = language === "ar" 
+    ? (config?.copyrightTextAr || "© 2025 آوتفريد. جميع الحقوق محفوظة.")
+    : (config?.copyrightTextEn || "© 2025 Outfred. All rights reserved.");
 
   return (
     <footer className="border-t border-white/10 bg-card/50 backdrop-blur-sm mt-auto">
@@ -30,7 +37,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Copyright Text */}
           <p className="text-sm text-muted-foreground text-center md:text-start" data-testid="text-copyright">
-            {config?.copyrightText || "© 2025 Outfred. All rights reserved."}
+            {copyrightText}
           </p>
 
           {/* Social Media Links */}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -34,6 +34,7 @@ import {
   BookOpen,
   Plus,
   Building,
+  FileText,
 } from "lucide-react";
 import {
   Table,
@@ -1214,31 +1215,33 @@ function MerchantDialog({
   });
 
   // Reset form when dialog opens or merchant changes
-  if (open) {
-    if (merchant && mode === "edit") {
-      form.reset({
-        ownerUserId: merchant.ownerUserId,
-        name: merchant.name,
-        city: merchant.city,
-        contact: merchant.contact || "",
-        status: merchant.status,
-        logoUrl: merchant.logoUrl || "",
-        bannerUrl: merchant.bannerUrl || "",
-        policies: merchant.policies || "",
-      });
-    } else if (mode === "create") {
-      form.reset({
-        ownerUserId: "",
-        name: "",
-        city: "",
-        contact: "",
-        status: "pending" as const,
-        logoUrl: "",
-        bannerUrl: "",
-        policies: "",
-      });
+  useEffect(() => {
+    if (open) {
+      if (merchant && mode === "edit") {
+        form.reset({
+          ownerUserId: merchant.ownerUserId,
+          name: merchant.name,
+          city: merchant.city,
+          contact: merchant.contact || "",
+          status: merchant.status,
+          logoUrl: merchant.logoUrl || "",
+          bannerUrl: merchant.bannerUrl || "",
+          policies: merchant.policies || "",
+        });
+      } else if (mode === "create") {
+        form.reset({
+          ownerUserId: "",
+          name: "",
+          city: "",
+          contact: "",
+          status: "pending" as const,
+          logoUrl: "",
+          bannerUrl: "",
+          policies: "",
+        });
+      }
     }
-  }
+  }, [open, merchant, mode, form]);
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -1697,7 +1700,8 @@ function BrandDialog({
 // Footer Config View Component
 function FooterConfigView() {
   const { toast } = useToast();
-  const [copyrightText, setCopyrightText] = useState("");
+  const [copyrightTextEn, setCopyrightTextEn] = useState("");
+  const [copyrightTextAr, setCopyrightTextAr] = useState("");
   const [socials, setSocials] = useState({
     instagram: "",
     facebook: "",
@@ -1709,7 +1713,8 @@ function FooterConfigView() {
 
   const { data: config, isLoading } = useQuery<{
     id: string;
-    copyrightText: string;
+    copyrightTextEn: string;
+    copyrightTextAr: string;
     socialLinks: typeof socials;
   }>({
     queryKey: ["/api/footer-config"],
@@ -1717,7 +1722,8 @@ function FooterConfigView() {
 
   useEffect(() => {
     if (config) {
-      setCopyrightText(config.copyrightText || "");
+      setCopyrightTextEn(config.copyrightTextEn || "");
+      setCopyrightTextAr(config.copyrightTextAr || "");
       setSocials(config.socialLinks || {});
     }
   }, [config]);
@@ -1725,7 +1731,8 @@ function FooterConfigView() {
   const updateConfig = useMutation({
     mutationFn: async () => {
       await apiRequest("PATCH", "/api/admin/footer-config", {
-        copyrightText,
+        copyrightTextEn,
+        copyrightTextAr,
         socialLinks: socials,
       });
     },
@@ -1747,15 +1754,29 @@ function FooterConfigView() {
       <h2 className="text-2xl font-bold mb-6">Footer Configuration</h2>
       
       <GlassCard className="p-6 space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="copyright">Copyright Text</Label>
-          <Input
-            id="copyright"
-            value={copyrightText}
-            onChange={(e) => setCopyrightText(e.target.value)}
-            placeholder="© 2025 Outfred. All rights reserved."
-            data-testid="input-copyright"
-          />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="copyright-en">Copyright Text (English)</Label>
+            <Input
+              id="copyright-en"
+              value={copyrightTextEn}
+              onChange={(e) => setCopyrightTextEn(e.target.value)}
+              placeholder="© 2025 Outfred. All rights reserved."
+              data-testid="input-copyright-en"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="copyright-ar">Copyright Text (Arabic)</Label>
+            <Input
+              id="copyright-ar"
+              dir="rtl"
+              value={copyrightTextAr}
+              onChange={(e) => setCopyrightTextAr(e.target.value)}
+              placeholder="© 2025 آوتفريد. جميع الحقوق محفوظة."
+              data-testid="input-copyright-ar"
+            />
+          </div>
         </div>
 
         <div className="space-y-3 border-t border-white/10 pt-4">

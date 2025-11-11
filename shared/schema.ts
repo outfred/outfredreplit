@@ -205,7 +205,8 @@ export const navLinks = pgTable("nav_links", {
 // CMS: Footer Config table (singleton)
 export const footerConfig = pgTable("footer_config", {
   id: varchar("id").primaryKey().default("singleton"),
-  copyrightText: text("copyright_text").notNull().default("© 2025 Outfred. All rights reserved."),
+  copyrightTextEn: text("copyright_text_en").notNull().default("© 2025 Outfred. All rights reserved."),
+  copyrightTextAr: text("copyright_text_ar").notNull().default("© 2025 آوتفريد. جميع الحقوق محفوظة."),
   socialLinks: jsonb("social_links").$type<{
     instagram?: string;
     facebook?: string;

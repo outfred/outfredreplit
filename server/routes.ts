@@ -1150,7 +1150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!config) {
       return res.json({
         id: "singleton",
-        copyrightText: "© 2025 Outfred. All rights reserved.",
+        copyrightTextEn: "© 2025 Outfred. All rights reserved.",
+        copyrightTextAr: "© 2025 آوتفريد. جميع الحقوق محفوظة.",
         socialLinks: {},
         updatedAt: new Date(),
       });
@@ -1162,7 +1163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/footer-config", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
     try {
       const updates: any = {};
-      if (req.body.copyrightText !== undefined) updates.copyrightText = req.body.copyrightText;
+      if (req.body.copyrightTextEn !== undefined) updates.copyrightTextEn = req.body.copyrightTextEn;
+      if (req.body.copyrightTextAr !== undefined) updates.copyrightTextAr = req.body.copyrightTextAr;
       if (req.body.socialLinks !== undefined) updates.socialLinks = req.body.socialLinks;
 
       const config = await storage.updateFooterConfig(updates);
