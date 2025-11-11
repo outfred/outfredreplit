@@ -3,6 +3,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertMerchantSchema } from "@shared/schema";
+import { z } from "zod";
 import type { User, Merchant, Brand } from "@shared/schema";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowButton } from "@/components/ui/glow-button";
@@ -11,6 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Users,
   Store,
@@ -42,17 +49,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Merchant form schema
+const merchantFormSchema = insertMerchantSchema.extend({
+  status: z.enum(["pending", "active", "banned"]).optional(),
+});
+
 export default function AdminDashboard() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<
     "users" | "merchants" | "brands" | "ai" | "metrics" | "config"
   >("users");
+  
+  // Merchant Dialog State
+  const [merchantDialog, setMerchantDialog] = useState<{
+    open: boolean;
+    mode: "create" | "edit";
+    merchant?: Merchant;
+  }>({ open: false, mode: "create" });
+  
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    merchantId?: string;
+    merchantName?: string;
+  }>({ open: false });
 
-  // Fetch Users
+  // Fetch Users (also needed for merchant owner selection)
   const { data: usersData = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
-    enabled: activeView === "users",
+    enabled: activeView === "users" || activeView === "merchants",
   });
 
   // Fetch Merchants
@@ -97,6 +122,22 @@ export default function AdminDashboard() {
     },
   });
 
+  // Create Merchant Mutation
+  const createMerchant = useMutation({
+    mutationFn: async (data: z.infer<typeof merchantFormSchema>) => {
+      const res = await apiRequest("POST", "/api/admin/merchants", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/merchants"] });
+      toast({ title: t("success"), description: "Merchant created successfully" });
+      setMerchantDialog({ open: false, mode: "create" });
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to create merchant", variant: "destructive" });
+    },
+  });
+
   // Update Merchant Mutation
   const updateMerchant = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Merchant> }) => {
@@ -106,6 +147,7 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/merchants"] });
       toast({ title: t("success"), description: "Merchant updated successfully" });
+      setMerchantDialog({ open: false, mode: "create" });
     },
     onError: () => {
       toast({ title: t("error"), description: "Failed to update merchant", variant: "destructive" });
@@ -120,6 +162,7 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/merchants"] });
       toast({ title: t("success"), description: "Merchant deleted successfully" });
+      setDeleteConfirm({ open: false });
     },
     onError: () => {
       toast({ title: t("error"), description: "Failed to delete merchant", variant: "destructive" });
@@ -254,7 +297,11 @@ export default function AdminDashboard() {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">{t("merchants")}</h2>
-              <GlowButton variant="primary" data-testid="button-add-merchant">
+              <GlowButton 
+                variant="primary" 
+                onClick={() => setMerchantDialog({ open: true, mode: "create" })}
+                data-testid="button-add-merchant"
+              >
                 <Store className="w-4 h-4 me-2" />
                 Add Merchant
               </GlowButton>
@@ -297,11 +344,27 @@ export default function AdminDashboard() {
                           <Button 
                             size="sm" 
                             variant="ghost"
+                            onClick={() => setMerchantDialog({ open: true, mode: "edit", merchant })}
+                            data-testid={`button-edit-${merchant.id}`}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
                             onClick={() => updateMerchant.mutate({ id: merchant.id, data: { status: "banned" } })}
                             disabled={updateMerchant.isPending}
                             data-testid={`button-ban-${merchant.id}`}
                           >
                             <ShieldBan className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => setDeleteConfirm({ open: true, merchantId: merchant.id, merchantName: merchant.name })}
+                            data-testid={`button-delete-${merchant.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -580,6 +643,268 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Merchant Dialog */}
+      <MerchantDialog
+        open={merchantDialog.open}
+        mode={merchantDialog.mode}
+        merchant={merchantDialog.merchant}
+        onClose={() => setMerchantDialog({ open: false, mode: "create" })}
+        onSubmit={(data) => {
+          if (merchantDialog.mode === "create") {
+            createMerchant.mutate(data);
+          } else if (merchantDialog.merchant) {
+            updateMerchant.mutate({ id: merchantDialog.merchant.id, data });
+          }
+        }}
+        isPending={createMerchant.isPending || updateMerchant.isPending}
+      />
+
+      {/* Delete Confirmation */}
+      <Dialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}>
+        <DialogContent className="bg-card/95 backdrop-blur-xl border-card-border">
+          <DialogHeader>
+            <DialogTitle>Delete Merchant</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteConfirm.merchantName}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirm({ open: false })}
+              disabled={deleteMerchant.isPending}
+              data-testid="button-cancel-delete"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirm.merchantId && deleteMerchant.mutate(deleteConfirm.merchantId)}
+              disabled={deleteMerchant.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteMerchant.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+// Merchant Dialog Component
+function MerchantDialog({
+  open,
+  mode,
+  merchant,
+  onClose,
+  onSubmit,
+  isPending,
+}: {
+  open: boolean;
+  mode: "create" | "edit";
+  merchant?: Merchant;
+  onClose: () => void;
+  onSubmit: (data: z.infer<typeof merchantFormSchema>) => void;
+  isPending: boolean;
+}) {
+  const { t } = useLanguage();
+  
+  const form = useForm<z.infer<typeof merchantFormSchema>>({
+    resolver: zodResolver(merchantFormSchema),
+    defaultValues: {
+      ownerUserId: "",
+      name: "",
+      city: "",
+      contact: "",
+      status: "pending" as const,
+      logoUrl: "",
+      bannerUrl: "",
+      policies: "",
+    },
+  });
+
+  // Reset form when dialog opens or merchant changes
+  if (open) {
+    if (merchant && mode === "edit") {
+      form.reset({
+        ownerUserId: merchant.ownerUserId,
+        name: merchant.name,
+        city: merchant.city,
+        contact: merchant.contact || "",
+        status: merchant.status,
+        logoUrl: merchant.logoUrl || "",
+        bannerUrl: merchant.bannerUrl || "",
+        policies: merchant.policies || "",
+      });
+    } else if (mode === "create") {
+      form.reset({
+        ownerUserId: "",
+        name: "",
+        city: "",
+        contact: "",
+        status: "pending" as const,
+        logoUrl: "",
+        bannerUrl: "",
+        policies: "",
+      });
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="bg-card/95 backdrop-blur-xl border-card-border max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{mode === "create" ? "Add New Merchant" : "Edit Merchant"}</DialogTitle>
+          <DialogDescription>
+            {mode === "create" 
+              ? "Create a new merchant account with all required details" 
+              : "Update merchant information and settings"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="ownerUserId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Owner User</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-owner-user">
+                        <SelectValue placeholder="Select user" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-popover/95 backdrop-blur-xl border-popover-border">
+                      {usersData.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("name")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Merchant business name" data-testid="input-merchant-name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("city")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Cairo, Alexandria, etc." data-testid="input-merchant-city" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Email or phone number" data-testid="input-merchant-contact" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("status")}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-merchant-status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-popover/95 backdrop-blur-xl border-popover-border">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="banned">Banned</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Logo URL</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="https://..." data-testid="input-merchant-logo" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="policies"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Policies</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="Return policy, shipping info, etc." rows={3} data-testid="input-merchant-policies" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isPending}
+                data-testid="button-cancel-merchant"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending}
+                data-testid="button-submit-merchant"
+              >
+                {isPending ? "Saving..." : mode === "create" ? "Create" : "Update"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
