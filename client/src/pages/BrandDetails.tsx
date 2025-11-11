@@ -204,6 +204,7 @@ export default function BrandDetails() {
               <FavoriteProductTile
                 key={product.id}
                 {...product}
+                brandName={product.brandName || undefined}
                 onClick={() => setLocation(`/product/${product.id}`)}
               />
             ))}
