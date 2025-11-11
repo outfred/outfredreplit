@@ -601,6 +601,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== MERCHANT-SPECIFIC ROUTES =====
+  
+  // Get merchant analytics
+  app.get("/api/merchant/analytics", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      let merchantId: string;
+
+      // Admin/owner can target specific merchant via query param
+      if ((req.user!.role === "admin" || req.user!.role === "owner") && req.query.merchantId) {
+        merchantId = req.query.merchantId as string;
+        // Validate merchant exists
+        const merchant = await storage.getMerchant(merchantId);
+        if (!merchant) {
+          return res.status(404).json({ error: "Merchant not found" });
+        }
+      } else {
+        // Merchant users get their own analytics
+        const merchant = await storage.getMerchantByOwner(req.user!.userId);
+        if (!merchant) {
+          return res.status(404).json({ error: "Merchant profile not found" });
+        }
+        merchantId = merchant.id;
+      }
+
+      const analytics = await storage.getMerchantAnalytics(merchantId);
+      res.json(analytics);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch analytics" });
+    }
+  });
+
   // Get merchant products
   app.get("/api/merchant/products", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {

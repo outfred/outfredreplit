@@ -54,6 +54,14 @@ export interface IStorage {
   updateMerchant(id: string, updates: Partial<Merchant>): Promise<Merchant>;
   deleteMerchant(id: string): Promise<void>;
   listMerchants(): Promise<Merchant[]>;
+  getMerchantAnalytics(merchantId: string): Promise<{
+    totalProducts: number;
+    publishedProducts: number;
+    totalViews: number;
+    totalClicks: number;
+    conversionRate: number;
+    revenue: number; // TODO: Will be real once orders table is implemented
+  }>;
 
   // Brands
   getBrand(id: string): Promise<Brand | undefined>;
@@ -204,6 +212,43 @@ export class DatabaseStorage implements IStorage {
 
   async listMerchants(): Promise<Merchant[]> {
     return await db.select().from(merchants).orderBy(desc(merchants.createdAt));
+  }
+
+  async getMerchantAnalytics(merchantId: string): Promise<{
+    totalProducts: number;
+    publishedProducts: number;
+    totalViews: number;
+    totalClicks: number;
+    conversionRate: number;
+    revenue: number;
+  }> {
+    const result = await db
+      .select({
+        totalProducts: sql<number>`COUNT(*)::int`,
+        publishedProducts: sql<number>`COUNT(*) FILTER (WHERE ${products.published} = true)::int`,
+        totalViews: sql<number>`COALESCE(SUM(${products.views}), 0)::int`,
+        totalClicks: sql<number>`COALESCE(SUM(${products.clicks}), 0)::int`,
+      })
+      .from(products)
+      .where(eq(products.merchantId, merchantId));
+
+    const stats = result[0] || {
+      totalProducts: 0,
+      publishedProducts: 0,
+      totalViews: 0,
+      totalClicks: 0,
+    };
+
+    // Calculate conversion rate (avoid division by zero)
+    const conversionRate = stats.totalViews > 0 
+      ? Number(((stats.totalClicks / stats.totalViews) * 100).toFixed(2))
+      : 0;
+
+    return {
+      ...stats,
+      conversionRate,
+      revenue: 0, // TODO: Calculate from orders table once implemented
+    };
   }
 
   // Brands
