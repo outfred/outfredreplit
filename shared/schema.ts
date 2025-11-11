@@ -46,11 +46,12 @@ export const merchants = pgTable("merchants", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Brands table
+// Brands table (bilingual support)
 export const brands = pgTable("brands", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull().unique(),
-  city: text("city").notNull(),
+  nameEn: text("name_en").notNull(),
+  nameAr: text("name_ar"),
+  websiteUrl: text("website_url"),
   logoUrl: text("logo_url"),
   coverUrl: text("cover_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

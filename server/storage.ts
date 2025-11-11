@@ -186,7 +186,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBrandByName(name: string): Promise<Brand | undefined> {
-    const [brand] = await db.select().from(brands).where(eq(brands.name, name));
+    const [brand] = await db.select().from(brands).where(eq(brands.nameEn, name));
     return brand || undefined;
   }
 
@@ -214,7 +214,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listBrands(): Promise<Brand[]> {
-    return await db.select().from(brands).orderBy(asc(brands.name));
+    return await db.select().from(brands).orderBy(asc(brands.nameEn));
   }
 
   // Products

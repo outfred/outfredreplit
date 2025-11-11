@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertMerchantSchema } from "@shared/schema";
+import { insertMerchantSchema, insertBrandSchema } from "@shared/schema";
 import { z } from "zod";
 import type { User, Merchant, Brand, Product } from "@shared/schema";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -32,6 +32,8 @@ import {
   Database,
   Image as ImageIcon,
   BookOpen,
+  Plus,
+  Building,
 } from "lucide-react";
 import {
   Table,
@@ -232,6 +234,30 @@ export default function AdminDashboard() {
       toast({ title: t("error"), description: "Failed to update product", variant: "destructive" });
     },
   });
+
+  // Delete Brand Mutation
+  const deleteBrand = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/brands/${id}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
+      toast({ title: t("success"), description: "Brand deleted successfully" });
+      setDeleteBrandConfirm({ open: false });
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to delete brand", variant: "destructive" });
+    },
+  });
+
+  // Brand Dialog State
+  const [brandDialogOpen, setBrandDialogOpen] = useState(false);
+  const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
+  const [deleteBrandConfirm, setDeleteBrandConfirm] = useState<{
+    open: boolean;
+    brandId?: string;
+    brandName?: string;
+  }>({ open: false });
 
   const users = usersData;
   const merchants = merchantsData;
@@ -539,40 +565,77 @@ export default function AdminDashboard() {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">{t("brands")}</h2>
-              <GlowButton variant="primary" data-testid="button-add-brand">
-                <Sparkles className="w-4 h-4 me-2" />
-                Add Brand
+              <GlowButton 
+                variant="default" 
+                onClick={() => {
+                  setEditingBrand(null);
+                  setBrandDialogOpen(true);
+                }}
+                data-testid="button-add-brand"
+              >
+                <Plus className="w-4 h-4 me-2" />
+                {t("addBrand")}
               </GlowButton>
             </div>
-            <GlassCard className="overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead>{t("name")}</TableHead>
-                    <TableHead>{t("city")}</TableHead>
-                    <TableHead className="text-end">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {brands.map((brand) => (
-                    <TableRow key={brand.id} className="border-white/10" data-testid={`row-brand-${brand.id}`}>
-                      <TableCell className="font-medium">{brand.name}</TableCell>
-                      <TableCell>{brand.city}</TableCell>
-                      <TableCell className="text-end">
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="ghost" data-testid={`button-edit-brand-${brand.id}`}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" data-testid={`button-delete-brand-${brand.id}`}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+
+            {brandsLoading ? (
+              <GlassCard className="p-8 text-center">Loading brands...</GlassCard>
+            ) : (
+              <GlassCard className="overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-white/5">
+                      <TableHead>Logo</TableHead>
+                      <TableHead>Name (En)</TableHead>
+                      <TableHead>Name (Ar)</TableHead>
+                      <TableHead>Website</TableHead>
+                      <TableHead className="text-end">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </GlassCard>
+                  </TableHeader>
+                  <TableBody>
+                    {brands.map((brand) => (
+                      <TableRow key={brand.id} className="border-white/10 hover:bg-white/5" data-testid={`row-brand-${brand.id}`}>
+                        <TableCell>
+                          {brand.logoUrl ? (
+                            <img src={brand.logoUrl} alt={brand.nameEn} className="w-12 h-12 object-contain rounded" />
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                              <Building className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{brand.nameEn}</TableCell>
+                        <TableCell>{brand.nameAr || "-"}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{brand.websiteUrl || "-"}</TableCell>
+                        <TableCell className="text-end">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingBrand(brand);
+                                setBrandDialogOpen(true);
+                              }}
+                              data-testid={`button-edit-brand-${brand.id}`}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => setDeleteBrandConfirm({ open: true, brandId: brand.id, brandName: brand.nameEn })}
+                              data-testid={`button-delete-brand-${brand.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </GlassCard>
+            )}
           </div>
         )}
 
@@ -882,6 +945,46 @@ export default function AdminDashboard() {
               data-testid="button-confirm-delete-product"
             >
               {deleteProduct.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Brand Add/Edit Dialog */}
+      <BrandDialog
+        open={brandDialogOpen}
+        onClose={() => {
+          setBrandDialogOpen(false);
+          setEditingBrand(null);
+        }}
+        brand={editingBrand}
+      />
+
+      {/* Delete Brand Confirmation */}
+      <Dialog open={deleteBrandConfirm.open} onOpenChange={(open) => setDeleteBrandConfirm({ ...deleteBrandConfirm, open })}>
+        <DialogContent className="bg-card/95 backdrop-blur-xl border-card-border">
+          <DialogHeader>
+            <DialogTitle>Delete Brand</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteBrandConfirm.brandName}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteBrandConfirm({ open: false })}
+              disabled={deleteBrand.isPending}
+              data-testid="button-cancel-delete-brand"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteBrandConfirm.brandId && deleteBrand.mutate(deleteBrandConfirm.brandId)}
+              disabled={deleteBrand.isPending}
+              data-testid="button-confirm-delete-brand"
+            >
+              {deleteBrand.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1256,3 +1359,178 @@ function MerchantDialog({
     </Dialog>
   );
 }
+
+// Brand Add/Edit Dialog Component
+function BrandDialog({
+  open,
+  onClose,
+  brand,
+}: {
+  open: boolean;
+  onClose: () => void;
+  brand: Brand | null;
+}) {
+  const { toast } = useToast();
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const { t } = useLanguage();
+
+  const form = useForm<z.infer<typeof insertBrandSchema>>({
+    resolver: zodResolver(insertBrandSchema.extend({
+      logoUrl: z.string().optional(),
+    })),
+    defaultValues: {
+      nameEn: brand?.nameEn || "",
+      nameAr: brand?.nameAr || "",
+      websiteUrl: brand?.websiteUrl || "",
+      logoUrl: brand?.logoUrl || "",
+    },
+  });
+
+  const createBrand = useMutation({
+    mutationFn: async (data: FormData) => {
+      const res = await fetch("/api/admin/brands", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: data,
+      });
+      if (!res.ok) throw new Error("Failed to create brand");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
+      toast({ title: t("success"), description: "Brand created successfully" });
+      onClose();
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to create brand", variant: "destructive" });
+    },
+  });
+
+  const updateBrand = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: FormData }) => {
+      const res = await fetch(`/api/admin/brands/${id}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: data,
+      });
+      if (!res.ok) throw new Error("Failed to update brand");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
+      toast({ title: t("success"), description: "Brand updated successfully" });
+      onClose();
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to update brand", variant: "destructive" });
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof insertBrandSchema>) => {
+    const formData = new FormData();
+    formData.append("nameEn", values.nameEn);
+    if (values.nameAr) formData.append("nameAr", values.nameAr);
+    if (values.websiteUrl) formData.append("websiteUrl", values.websiteUrl);
+    if (logoFile) formData.append("logo", logoFile);
+
+    if (brand) {
+      updateBrand.mutate({ id: brand.id, data: formData });
+    } else {
+      createBrand.mutate(formData);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-card/95 backdrop-blur-xl border-card-border max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{brand ? "Edit Brand" : "Create Brand"}</DialogTitle>
+          <DialogDescription>
+            {brand ? "Update brand information" : "Add a new brand to the platform"}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="nameEn"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Brand Name (English)</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-brand-name-en" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="nameAr"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Brand Name (Arabic)</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-brand-name-ar" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="websiteUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website URL</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="https://..." data-testid="input-brand-website" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-2">
+              <FormLabel>Logo</FormLabel>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                data-testid="input-brand-logo"
+              />
+              {brand?.logoUrl && !logoFile && (
+                <div className="mt-2">
+                  <img src={brand.logoUrl} alt={brand.nameEn} className="w-24 h-24 object-contain rounded border" />
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={createBrand.isPending || updateBrand.isPending}
+                data-testid="button-cancel-brand"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={createBrand.isPending || updateBrand.isPending}
+                data-testid="button-save-brand"
+              >
+                {createBrand.isPending || updateBrand.isPending ? "Saving..." : brand ? "Update Brand" : "Create Brand"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

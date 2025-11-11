@@ -9,10 +9,50 @@ import { createEmbeddingProvider, spellCorrector } from "./lib/ai-providers";
 import { metricsMiddleware } from "./lib/metrics";
 import { z } from "zod";
 import { insertUserSchema, insertMerchantSchema, insertBrandSchema, insertProductSchema, insertOutfitSchema } from "@shared/schema";
+import path from "path";
+import { fileURLToPath } from "url";
+import { mkdirSync } from "fs";
 
-const upload = multer({ storage: multer.memoryStorage() });
+// Initialize upload directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "uploads");
+try {
+  mkdirSync(uploadsDir, { recursive: true });
+} catch (err) {
+  // Directory already exists
+}
+
+// Configure multer for disk storage
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: multerStorage });
+
+// Separate instance for image search (needs buffer)
+const uploadMemory = multer({ storage: multer.memoryStorage() });
+
+// Track if routes have been registered to prevent duplicates
+let routesRegistered = false;
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Only register static middleware and routes once (prevent hot reload duplicates)
+  if (routesRegistered) {
+    return createServer(app);
+  }
+  
+  routesRegistered = true;
+  
+  // Serve uploaded files statically
+  app.use("/uploads", express.static(uploadsDir));
+  
   // Apply metrics middleware
   app.use(metricsMiddleware());
 
@@ -318,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image search
-  app.post("/api/search/image", upload.single("image"), async (req, res) => {
+  app.post("/api/search/image", uploadMemory.single("image"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No image provided" });
@@ -630,10 +670,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(brands);
   });
 
-  // Create brand (admin only)
-  app.post("/api/admin/brands", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+  // Create brand (admin only) with logo upload
+  app.post("/api/admin/brands", authMiddleware, requireRole("admin", "owner"), upload.single("logo"), async (req: AuthRequest, res) => {
     try {
-      const data = insertBrandSchema.parse(req.body);
+      const brandData = {
+        nameEn: req.body.nameEn,
+        nameAr: req.body.nameAr || undefined,
+        websiteUrl: req.body.websiteUrl || undefined,
+        logoUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
+      };
+
+      const data = insertBrandSchema.parse(brandData);
       const brand = await storage.createBrand(data);
       res.status(201).json(brand);
     } catch (error: any) {
@@ -641,11 +688,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update brand
-  app.patch("/api/admin/brands/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+  // Update brand with logo upload
+  app.patch("/api/admin/brands/:id", authMiddleware, requireRole("admin", "owner"), upload.single("logo"), async (req: AuthRequest, res) => {
     try {
+      const brandData: any = {};
+      if (req.body.nameEn) brandData.nameEn = req.body.nameEn;
+      if (req.body.nameAr) brandData.nameAr = req.body.nameAr;
+      if (req.body.websiteUrl) brandData.websiteUrl = req.body.websiteUrl;
+      if (req.file) brandData.logoUrl = `/uploads/${req.file.filename}`;
+
       const updateSchema = insertBrandSchema.partial().omit({ id: true });
-      const validatedData = updateSchema.parse(req.body);
+      const validatedData = updateSchema.parse(brandData);
       const brand = await storage.updateBrand(req.params.id, validatedData);
       res.json(brand);
     } catch (error: any) {
