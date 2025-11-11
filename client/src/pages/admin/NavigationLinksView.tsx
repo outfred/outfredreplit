@@ -147,7 +147,7 @@ export function NavigationLinksView() {
     defaultValues: {
       labelEn: "",
       labelAr: "",
-      href: "",
+      path: "",
       order: navLinks.length,
     },
   });
@@ -164,7 +164,7 @@ export function NavigationLinksView() {
     form.reset({
       labelEn: "",
       labelAr: "",
-      href: "",
+      path: "",
       order: navLinks.length,
     });
     setEditingLink(null);
@@ -175,7 +175,7 @@ export function NavigationLinksView() {
     form.reset({
       labelEn: link.labelEn,
       labelAr: link.labelAr,
-      href: link.href,
+      path: link.path,
       order: link.order,
     });
     setEditingLink(link);
@@ -217,7 +217,7 @@ export function NavigationLinksView() {
                 <TableRow key={link.id} data-testid={`row-nav-link-${link.id}`}>
                   <TableCell>{link.labelEn}</TableCell>
                   <TableCell dir="rtl">{link.labelAr}</TableCell>
-                  <TableCell className="font-mono text-sm">{link.href}</TableCell>
+                  <TableCell className="font-mono text-sm">{link.path}</TableCell>
                   <TableCell>{link.order}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
@@ -303,12 +303,12 @@ export function NavigationLinksView() {
               />
               <FormField
                 control={form.control}
-                name="href"
+                name="path"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Link (href)</FormLabel>
+                    <FormLabel>Path</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="/home" data-testid="input-href" />
+                      <Input {...field} placeholder="/home" data-testid="input-path" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -25,10 +25,10 @@ The application is built with a schema-first, type-safe architecture using React
 - **Outfit Builder**: AI-suggested outfit combinations based on user input (height, weight, prompt), allowing users to save and share. Integrates with Gemini AI for suggestions.
 - **Multi-role Dashboards**:
     - **User Profile**: Personal settings and saved items.
-    - **Merchant Dashboard**: Product CRUD (including CSV import), analytics (products, views, clicks, conversion rate, revenue), and store settings.
+    - **Merchant Dashboard**: Product CRUD (including CSV import), analytics (products, views, clicks, conversion rate, revenue), and store settings. SMTP test email functionality for verifying email configuration.
     - **Admin Dashboard**: Comprehensive system configuration, management of users, merchants, brands, navigation links, footer content, and static pages.
 - **Content Management Systems (CMS)**:
-    - **Navigation CMS**: Database-driven header navigation links with bilingual support.
+    - **Navigation CMS**: Full CRUD interface for header navigation links with bilingual support (labelEn/labelAr), order management, and up/down reordering. Implemented in separate `NavigationLinksView.tsx` component.
     - **Footer CMS**: Configurable footer content, including bilingual copyright text and social media links.
     - **Static Pages CMS**: Management of static content pages with bilingual support and SEO metadata.
 - **Performance Monitoring**: P95/P99 latency metrics tracked per API route, with a target of <250ms for p95.
