@@ -930,6 +930,7 @@ export default function AdminDashboard() {
           }
         }}
         isPending={createMerchant.isPending || updateMerchant.isPending}
+        usersData={usersData}
       />
 
       {/* Delete Confirmation */}
@@ -1203,6 +1204,7 @@ function MerchantDialog({
   onClose,
   onSubmit,
   isPending,
+  usersData = [],
 }: {
   open: boolean;
   mode: "create" | "edit";
@@ -1210,6 +1212,7 @@ function MerchantDialog({
   onClose: () => void;
   onSubmit: (data: z.infer<typeof merchantFormSchema>) => void;
   isPending: boolean;
+  usersData?: User[];
 }) {
   const { t } = useLanguage();
   
