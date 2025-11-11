@@ -115,9 +115,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    // Prevent ID and email changes
+    const { id: _, email: __, ...safeUpdates } = updates as any;
     const [updated] = await db
       .update(users)
-      .set(updates)
+      .set(safeUpdates)
       .where(eq(users.id, id))
       .returning();
     return updated;
@@ -151,9 +153,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateMerchant(id: string, updates: Partial<Merchant>): Promise<Merchant> {
+    // Prevent ID changes
+    const { id: _, ...safeUpdates } = updates as any;
     const [updated] = await db
       .update(merchants)
-      .set(updates)
+      .set(safeUpdates)
       .where(eq(merchants.id, id))
       .returning();
     return updated;
@@ -187,9 +191,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBrand(id: string, updates: Partial<Brand>): Promise<Brand> {
+    // Prevent ID changes
+    const { id: _, ...safeUpdates } = updates as any;
     const [updated] = await db
       .update(brands)
-      .set(updates)
+      .set(safeUpdates)
       .where(eq(brands.id, id))
       .returning();
     return updated;
@@ -218,9 +224,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
+    // Prevent ID changes and ensure updatedAt is set
+    const { id: _, ...safeUpdates } = updates as any;
     const [updated] = await db
       .update(products)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...safeUpdates, updatedAt: new Date() })
       .where(eq(products.id, id))
       .returning();
     return updated;
@@ -287,9 +295,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOutfit(id: string, updates: Partial<Outfit>): Promise<Outfit> {
+    // Prevent ID and userId changes
+    const { id: _, userId: __, ...safeUpdates } = updates as any;
     const [updated] = await db
       .update(outfits)
-      .set(updates)
+      .set(safeUpdates)
       .where(eq(outfits.id, id))
       .returning();
     return updated;

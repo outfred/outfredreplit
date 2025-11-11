@@ -5,6 +5,14 @@ import { type User } from "@shared/schema";
 const JWT_SECRET = process.env.JWT_SECRET || "outfred-secret-key-change-in-production";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "outfred-refresh-secret-change-in-production";
 
+// Warn if using default secrets
+if (!process.env.JWT_SECRET) {
+  console.warn("⚠️  WARNING: Using default JWT_SECRET. Set JWT_SECRET environment variable in production!");
+}
+if (!process.env.REFRESH_SECRET) {
+  console.warn("⚠️  WARNING: Using default REFRESH_SECRET. Set REFRESH_SECRET environment variable in production!");
+}
+
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "7d";
 

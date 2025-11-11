@@ -142,6 +142,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/products", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {
       const data = insertProductSchema.parse(req.body);
+      
+      // For merchants: auto-assign their merchantId (prevent impersonation)
+      if (req.user!.role === "merchant") {
+        const merchant = await storage.getMerchantByOwner(req.user!.userId);
+        if (!merchant) {
+          return res.status(400).json({ error: "Merchant profile not found. Create merchant profile first." });
+        }
+        data.merchantId = merchant.id; // Override any provided merchantId
+      }
+      
+      // For admin/owner: merchantId must be provided and valid
+      if (req.user!.role !== "merchant") {
+        if (!data.merchantId) {
+          return res.status(400).json({ error: "merchantId is required" });
+        }
+        const merchant = await storage.getMerchant(data.merchantId);
+        if (!merchant) {
+          return res.status(400).json({ error: "Invalid merchantId" });
+        }
+      }
+      
       const product = await storage.createProduct(data);
       res.status(201).json(product);
     } catch (error: any) {
@@ -152,7 +173,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update product
   app.patch("/api/products/:id", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {
-      const product = await storage.updateProduct(req.params.id, req.body);
+      const existingProduct = await storage.getProduct(req.params.id);
+      if (!existingProduct) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // Verify ownership for merchants
+      if (req.user!.role === "merchant") {
+        const merchant = await storage.getMerchantByOwner(req.user!.userId);
+        if (!merchant || existingProduct.merchantId !== merchant.id) {
+          return res.status(403).json({ error: "Not authorized to modify this product" });
+        }
+      }
+
+      // Validate and sanitize update data
+      const updateSchema = insertProductSchema.partial().omit({ id: true });
+      const validatedData = updateSchema.parse(req.body);
+      
+      // Prevent merchantId changes for merchants (only admin/owner can reassign products)
+      if (req.user!.role === "merchant") {
+        delete (validatedData as any).merchantId;
+      } else {
+        // Admin/owner can change merchantId, but it must be valid
+        if (validatedData.merchantId && validatedData.merchantId !== existingProduct.merchantId) {
+          const targetMerchant = await storage.getMerchant(validatedData.merchantId);
+          if (!targetMerchant) {
+            return res.status(400).json({ error: "Invalid merchantId" });
+          }
+        }
+      }
+      
+      const product = await storage.updateProduct(req.params.id, validatedData);
       res.json(product);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update product" });
@@ -162,6 +213,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete product
   app.delete("/api/products/:id", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {
+      // Verify ownership for merchants
+      if (req.user!.role === "merchant") {
+        const product = await storage.getProduct(req.params.id);
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+        const merchant = await storage.getMerchantByOwner(req.user!.userId);
+        if (!merchant || product.merchantId !== merchant.id) {
+          return res.status(403).json({ error: "Not authorized to delete this product" });
+        }
+      }
+
       await storage.deleteProduct(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
@@ -291,11 +354,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(merchants);
   });
 
-  // Create merchant (admin or user upgrading to merchant)
-  app.post("/api/admin/merchants", authMiddleware, async (req: AuthRequest, res) => {
+  // Create merchant (admin/owner only)
+  app.post("/api/admin/merchants", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
     try {
       const data = insertMerchantSchema.parse(req.body);
+      
+      if (!data.ownerUserId) {
+        return res.status(400).json({ error: "ownerUserId is required" });
+      }
+      
+      // Verify target user exists
+      const targetUser = await storage.getUser(data.ownerUserId);
+      if (!targetUser) {
+        return res.status(400).json({ error: "Invalid ownerUserId" });
+      }
+      
+      // Check if user already has a merchant profile
+      const existing = await storage.getMerchantByOwner(data.ownerUserId);
+      if (existing) {
+        return res.status(400).json({ error: "User already has a merchant profile" });
+      }
+      
       const merchant = await storage.createMerchant(data);
+      res.status(201).json(merchant);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Invalid input" });
+    }
+  });
+
+  // User self-upgrade to merchant (limited fields)
+  app.post("/api/user/upgrade-to-merchant", authMiddleware, requireRole("user"), async (req: AuthRequest, res) => {
+    try {
+      // Check if user already has a merchant profile
+      const existing = await storage.getMerchantByOwner(req.user!.userId);
+      if (existing) {
+        return res.status(400).json({ error: "Merchant profile already exists" });
+      }
+      
+      // Validate only safe fields for self-upgrade
+      const selfUpgradeSchema = z.object({
+        name: z.string().min(1),
+        city: z.string().min(1),
+        contact: z.string().email(),
+      });
+      const validatedData = selfUpgradeSchema.parse(req.body);
+      
+      // Create merchant with safe defaults
+      const merchant = await storage.createMerchant({
+        ownerUserId: req.user!.userId,
+        name: validatedData.name,
+        city: validatedData.city,
+        contact: validatedData.contact,
+        status: "pending", // Always pending for self-upgrade, admin must approve
+      });
+      
+      // Upgrade user role to merchant
+      await storage.updateUser(req.user!.userId, { role: "merchant" });
+      
       res.status(201).json(merchant);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Invalid input" });
@@ -305,7 +420,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update merchant
   app.patch("/api/admin/merchants/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
     try {
-      const merchant = await storage.updateMerchant(req.params.id, req.body);
+      const updateSchema = insertMerchantSchema.partial().omit({ id: true, ownerUserId: true });
+      const validatedData = updateSchema.parse(req.body);
+      const merchant = await storage.updateMerchant(req.params.id, validatedData);
       res.json(merchant);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update merchant" });
@@ -411,7 +528,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update brand
   app.patch("/api/admin/brands/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
     try {
-      const brand = await storage.updateBrand(req.params.id, req.body);
+      const updateSchema = insertBrandSchema.partial().omit({ id: true });
+      const validatedData = updateSchema.parse(req.body);
+      const brand = await storage.updateBrand(req.params.id, validatedData);
       res.json(brand);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update brand" });
@@ -454,7 +573,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!outfit || outfit.userId !== req.user!.userId) {
         return res.status(404).json({ error: "Outfit not found" });
       }
-      const updated = await storage.updateOutfit(req.params.id, req.body);
+      const updateSchema = insertOutfitSchema.partial().omit({ id: true, userId: true });
+      const validatedData = updateSchema.parse(req.body);
+      const updated = await storage.updateOutfit(req.params.id, validatedData);
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update outfit" });
@@ -539,6 +660,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/users/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
     try {
       const { role } = z.object({ role: z.enum(["user", "merchant", "admin", "owner"]) }).parse(req.body);
+      
+      // Only owner can create other owners
+      if (role === "owner" && req.user!.role !== "owner") {
+        return res.status(403).json({ error: "Only owner can assign owner role" });
+      }
+      
       const user = await storage.updateUser(req.params.id, { role });
       res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
     } catch (error: any) {
@@ -582,7 +709,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update system config
   app.patch("/api/admin/config", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
     try {
-      const config = await storage.updateSystemConfig(req.body);
+      const configSchema = z.object({
+        embeddingsProvider: z.enum(["local", "huggingface", "openai"]).optional(),
+        imageGenerationProvider: z.enum(["off", "stable-diffusion", "dalle"]).optional(),
+        enableSpellCorrection: z.boolean().optional(),
+        enableOutfitAI: z.boolean().optional(),
+        enableImageSearch: z.boolean().optional(),
+        enableMultilingual: z.boolean().optional(),
+        synonyms: z.record(z.string(), z.string()).optional(),
+        providerKeys: z.object({
+          huggingface: z.string().optional(),
+          openai: z.string().optional(),
+        }).optional(),
+        smtpConfig: z.object({
+          host: z.string().optional(),
+          port: z.number().optional(),
+          user: z.string().optional(),
+          pass: z.string().optional(),
+        }).optional(),
+      });
+      const validatedData = configSchema.parse(req.body);
+      const config = await storage.updateSystemConfig(validatedData);
       res.json(config);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update config" });
