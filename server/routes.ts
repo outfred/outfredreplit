@@ -765,12 +765,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI outfit suggestions
+  // AI outfit suggestions with Gemini
   app.post("/api/outfit/ai", authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const { seedProductId, styleTags } = z.object({
-        seedProductId: z.string().optional(),
-        styleTags: z.array(z.string()).optional(),
+      const { userHeight, userWeight, aiPrompt } = z.object({
+        userHeight: z.number().min(100).max(250),
+        userWeight: z.number().min(30).max(200),
+        aiPrompt: z.string().min(3),
       }).parse(req.body);
 
       const config = await storage.getSystemConfig();
@@ -778,11 +779,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(503).json({ error: "Outfit AI is disabled" });
       }
 
-      // Simple rule-based suggestions
+      // Get all published products
       const allProducts = await storage.listProducts({ published: true });
-      const suggestions = allProducts.slice(0, 4);
+      
+      if (allProducts.length < 2) {
+        return res.status(400).json({ error: "Not enough products available for outfit generation" });
+      }
 
-      res.json({ suggestions });
+      // Prepare product data for AI
+      const availableProducts = allProducts.map(p => ({
+        id: p.id,
+        nameEn: p.nameEn,
+        category: p.category || 'other'
+      }));
+
+      // Use Gemini AI if configured
+      if (config.embeddingsProvider === 'gemini' && config.providerKeys?.gemini) {
+        const { createOutfitSuggestionProvider } = await import("./lib/ai-providers.js");
+        const aiProvider = createOutfitSuggestionProvider(config.providerKeys.gemini);
+        
+        const suggestion = await aiProvider.generateOutfitSuggestions({
+          userHeight,
+          userWeight,
+          aiPrompt,
+          availableProducts
+        });
+        
+        // Get full product details
+        const topProduct = await storage.getProduct(suggestion.topProductId);
+        const bottomProduct = await storage.getProduct(suggestion.bottomProductId);
+        
+        return res.json({
+          topProduct,
+          bottomProduct,
+          shoeRecommendation: suggestion.shoeRecommendation,
+          reasoning: suggestion.reasoning
+        });
+      }
+
+      // Fallback: Simple rule-based suggestions
+      const tops = allProducts.filter(p => 
+        ['top', 'shirt', 't-shirt', 'hoodie', 'jacket'].some(cat => p.category?.toLowerCase().includes(cat))
+      );
+      const bottoms = allProducts.filter(p => 
+        ['bottom', 'pants', 'jeans', 'shorts'].some(cat => p.category?.toLowerCase().includes(cat))
+      );
+      
+      const topProduct = tops[Math.floor(Math.random() * tops.length)] || allProducts[0];
+      const bottomProduct = bottoms[Math.floor(Math.random() * bottoms.length)] || allProducts[1];
+      
+      res.json({
+        topProduct,
+        bottomProduct,
+        shoeRecommendation: {
+          brandName: "Nike",
+          model: "Air Force 1",
+          reason: "Classic versatile sneaker"
+        },
+        reasoning: "Random selection (AI not configured)"
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "AI suggestion failed" });
     }
