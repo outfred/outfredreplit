@@ -203,14 +203,20 @@ export default function MerchantDashboard() {
     mutationFn: async (productId: string) => {
       return await apiRequest("DELETE", `/api/products/${productId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+    onSuccess: async () => {
+      const refetchPromises = [
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/products"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/analytics"], type: "all" })
+      ];
       if (merchantProfile?.id) {
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
-        });
+        refetchPromises.push(
+          queryClient.refetchQueries({ 
+            queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }],
+            type: "all"
+          })
+        );
       }
+      await Promise.all(refetchPromises);
       toast({ title: "Product deleted successfully" });
     },
     onError: () => {
@@ -332,14 +338,20 @@ export default function MerchantDashboard() {
       if (!response.ok) throw new Error("Import failed");
       return response.json();
     },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+    onSuccess: async (data: any) => {
+      const refetchPromises = [
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/products"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/analytics"], type: "all" })
+      ];
       if (merchantProfile?.id) {
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
-        });
+        refetchPromises.push(
+          queryClient.refetchQueries({ 
+            queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }],
+            type: "all"
+          })
+        );
       }
+      await Promise.all(refetchPromises);
       toast({ 
         title: `Imported ${data.imported} products`,
         description: data.failed > 0 ? `${data.failed} rows failed` : undefined 
@@ -388,14 +400,20 @@ export default function MerchantDashboard() {
         published: true,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+    onSuccess: async () => {
+      const refetchPromises = [
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/products"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/analytics"], type: "all" })
+      ];
       if (merchantProfile?.id) {
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
-        });
+        refetchPromises.push(
+          queryClient.refetchQueries({ 
+            queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }],
+            type: "all"
+          })
+        );
       }
+      await Promise.all(refetchPromises);
       toast({ title: "Product created successfully!" });
       setProductDialog({ open: false });
       setScrapedData(null);
@@ -417,13 +435,20 @@ export default function MerchantDashboard() {
         images: data.images.filter((img: string) => img.trim()),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
+    onSuccess: async () => {
+      const refetchPromises = [
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/products"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/analytics"], type: "all" })
+      ];
       if (merchantProfile?.id) {
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
-        });
+        refetchPromises.push(
+          queryClient.refetchQueries({ 
+            queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }],
+            type: "all"
+          })
+        );
       }
+      await Promise.all(refetchPromises);
       toast({ title: "Product updated successfully!" });
       setProductDialog({ open: false });
     },
@@ -514,14 +539,20 @@ export default function MerchantDashboard() {
         }
       }
       
-      // Invalidate queries after all imports
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      // Refetch queries after all imports
+      const refetchPromises = [
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/products"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/merchant/analytics"], type: "all" })
+      ];
       if (merchantProfile?.id) {
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
-        });
+        refetchPromises.push(
+          queryClient.refetchQueries({ 
+            queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }],
+            type: "all"
+          })
+        );
       }
+      await Promise.all(refetchPromises);
       
       // Show summary
       if (failCount === 0) {
