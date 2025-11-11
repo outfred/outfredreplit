@@ -70,38 +70,38 @@ export async function seedDatabase() {
   try {
     // Create owner user
     console.log("Creating owner user...");
-    const ownerPassword = await hashPassword("Owner#123");
+    const ownerPasswordHash = await hashPassword("Owner#123");
     const owner = await storage.createUser({
       email: "owner@outfred.com",
       name: "System Owner",
+      passwordHash: ownerPasswordHash,
       role: "owner",
-      passwordHash: ownerPassword,
     });
     console.log("✅ Owner created:", owner.email);
 
     // Create demo users
     console.log("Creating demo users...");
-    const demoPassword = await hashPassword("Demo#123");
+    const demoPasswordHash = await hashPassword("Demo#123");
     
     const merchant1Owner = await storage.createUser({
       email: "merchant1@outfred.com",
       name: "Ahmed Hassan",
+      passwordHash: demoPasswordHash,
       role: "merchant",
-      passwordHash: demoPassword,
     });
 
     const merchant2Owner = await storage.createUser({
       email: "merchant2@outfred.com",
       name: "Sara Mohamed",
+      passwordHash: demoPasswordHash,
       role: "merchant",
-      passwordHash: demoPassword,
     });
 
     const regularUser = await storage.createUser({
       email: "user@outfred.com",
       name: "John Doe",
+      passwordHash: demoPasswordHash,
       role: "user",
-      passwordHash: demoPassword,
     });
 
     console.log("✅ Demo users created");
@@ -324,5 +324,3 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     .then(() => process.exit(0))
     .catch(() => process.exit(1));
 }
-
-export { seedDatabase };
