@@ -13,6 +13,7 @@ import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Search from "@/pages/Search";
+import Brands from "@/pages/Brands";
 import ProductPage from "@/pages/ProductPage";
 import OutfitBuilder from "@/pages/OutfitBuilder";
 import Profile from "@/pages/Profile";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/search" component={Search} />
+      <Route path="/brands" component={Brands} />
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/outfit-builder">
         {() => (

@@ -130,13 +130,15 @@ export default function Search() {
       <div className="max-w-7xl mx-auto">
         {/* Search Bar */}
         <div className="mb-8">
-          <SearchBar
-            key={query}
-            placeholder={t("searchPlaceholder")}
-            defaultValue={query}
-            onSearch={(q) => setLocation(`/search?q=${encodeURIComponent(q)}`)}
-            data-testid="search-bar-page"
-          />
+          <div className="shadow-2xl rounded-2xl">
+            <SearchBar
+              key={query}
+              placeholder={t("searchPlaceholder")}
+              defaultValue={query}
+              onSearch={(q) => setLocation(`/search?q=${encodeURIComponent(q)}`)}
+              data-testid="search-bar-page"
+            />
+          </div>
         </div>
 
         <div className="flex gap-6">
@@ -177,9 +179,9 @@ export default function Search() {
               <div className="space-y-3">
                 <Label>{t("imageSearch") || "Search by Image"}</Label>
                 <label htmlFor="image-upload" className="cursor-pointer">
-                  <div className="border-2 border-dashed border-muted-foreground/20 rounded-xl p-4 hover:border-primary/50 transition-colors text-center">
+                  <div className="border-2 border-dashed border-muted-foreground/20 rounded-xl p-4 hover:border-primary/50 transition-colors text-center shadow-lg hover:shadow-xl bg-background/50 backdrop-blur-sm">
                     <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Upload image</p>
+                    <p className="text-sm text-muted-foreground font-medium">Upload image</p>
                     <input
                       id="image-upload"
                       type="file"

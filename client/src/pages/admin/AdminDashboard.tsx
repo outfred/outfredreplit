@@ -104,7 +104,7 @@ export default function AdminDashboard() {
   const { data: productsData = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", productMerchantFilter],
     queryFn: async () => {
-      const url = productMerchantFilter 
+      const url = (productMerchantFilter && productMerchantFilter !== "all")
         ? `/api/products?merchantId=${productMerchantFilter}`
         : "/api/products";
       const res = await fetch(url, {
@@ -411,7 +411,7 @@ export default function AdminDashboard() {
                     <SelectValue placeholder="All Merchants" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover/95 backdrop-blur-xl border-popover-border">
-                    <SelectItem value="">All Merchants</SelectItem>
+                    <SelectItem value="all">All Merchants</SelectItem>
                     {merchantsForImport.data?.map((merchant) => (
                       <SelectItem key={merchant.id} value={merchant.id}>
                         {merchant.name}
