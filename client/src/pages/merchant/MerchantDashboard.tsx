@@ -177,11 +177,19 @@ export default function MerchantDashboard() {
   // Scrape product mutation
   const scrapeMutation = useMutation({
     mutationFn: async (url: string) => {
-      return await apiRequest("POST", "/api/merchant/scrape-product", { url });
+      const response = await apiRequest("POST", "/api/merchant/scrape-product", { url });
+      return await response.json();
     },
     onSuccess: (data: any) => {
       setScrapedData(data);
-      toast({ title: "Product scraped successfully!" });
+      if (data.type === 'collection') {
+        toast({ 
+          title: `Found ${data.count} products!`,
+          description: "Select products to import"
+        });
+      } else {
+        toast({ title: "Product scraped successfully!" });
+      }
     },
     onError: (error: any) => {
       toast({ 
@@ -436,24 +444,14 @@ export default function MerchantDashboard() {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">{t("products")}</h2>
-              <div className="flex gap-2">
-                <GlowButton 
-                  variant="glass" 
-                  onClick={() => setScraperOpen(true)}
-                  data-testid="button-scrape-product"
-                >
-                  <Globe className="w-4 h-4 me-2" />
-                  Scrape from URL
-                </GlowButton>
-                <GlowButton 
-                  variant="primary" 
-                  onClick={handleOpenCreate}
-                  data-testid="button-add-product"
-                >
-                  <Plus className="w-4 h-4 me-2" />
-                  {t("addProduct")}
-                </GlowButton>
-              </div>
+              <GlowButton 
+                variant="primary" 
+                onClick={handleOpenCreate}
+                data-testid="button-add-product"
+              >
+                <Plus className="w-4 h-4 me-2" />
+                {t("addProduct")}
+              </GlowButton>
             </div>
 
             {productsLoading ? (
@@ -538,8 +536,157 @@ export default function MerchantDashboard() {
 
         {/* Import View */}
         {activeView === "import" && (
-          <div>
+          <div className="space-y-6">
             <h2 className="text-2xl font-bold mb-6">{t("importProducts")}</h2>
+            
+            {/* URL/Shopify Import */}
+            <GlassCard className="p-6">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold mb-2">Import from URL</h3>
+                <p className="text-muted-foreground text-sm">
+                  Import from product URLs or Shopify collections
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="https://asilieg.com/collections/all"
+                    value={scrapeUrl}
+                    onChange={(e) => setScrapeUrl(e.target.value)}
+                    data-testid="input-url-import"
+                    className="flex-1"
+                  />
+                  <GlowButton
+                    variant="primary"
+                    onClick={handleScrape}
+                    disabled={scrapeMutation.isPending || !scrapeUrl.trim()}
+                    data-testid="button-fetch-url"
+                  >
+                    {scrapeMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin me-2" />
+                        Fetching...
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-4 h-4 me-2" />
+                        Fetch Products
+                      </>
+                    )}
+                  </GlowButton>
+                </div>
+
+                {/* Single Product */}
+                {scrapedData && scrapedData.type === 'single' && (
+                  <div className="border border-white/20 rounded-xl p-4 space-y-3 bg-white/5">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-5 h-5 text-primary" />
+                      <h4 className="font-semibold">Product Found</h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Title:</span>
+                        <p className="font-medium">{scrapedData.title}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Price:</span>
+                        <p className="font-medium">{scrapedData.price} EGP</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Images:</span>
+                        <p className="font-medium">{scrapedData.images.length} found</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleSaveScraped}
+                      className="w-full"
+                      data-testid="button-add-scraped"
+                    >
+                      <Plus className="w-4 h-4 me-2" />
+                      Add to Products
+                    </Button>
+                  </div>
+                )}
+
+                {/* Collection Products */}
+                {scrapedData && scrapedData.type === 'collection' && (
+                  <div className="border border-white/20 rounded-xl p-4 space-y-4 bg-white/5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-5 h-5 text-primary" />
+                        <h4 className="font-semibold">Found {scrapedData.count} Products</h4>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={selectAllProducts}
+                          data-testid="button-select-all-url"
+                        >
+                          Select All
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedProducts(new Set())}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto space-y-2">
+                      {scrapedData.products.map((product: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className={`border border-white/20 rounded-lg p-3 flex items-center gap-3 cursor-pointer hover-elevate ${
+                            selectedProducts.has(idx) ? 'bg-primary/20 border-primary/50' : 'bg-white/5'
+                          }`}
+                          onClick={() => toggleProductSelection(idx)}
+                          data-testid={`url-product-${idx}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.has(idx)}
+                            onChange={() => toggleProductSelection(idx)}
+                            className="w-4 h-4"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <img
+                            src={product.images[0] || "/placeholder-product.png"}
+                            alt={product.title}
+                            className="w-14 h-14 rounded object-cover"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{product.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {product.price} EGP • {product.images.length} img
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                      <p className="text-sm text-muted-foreground">
+                        {selectedProducts.size} selected
+                      </p>
+                      <Button
+                        onClick={handleImportSelected}
+                        disabled={selectedProducts.size === 0}
+                        data-testid="button-import-url-selected"
+                      >
+                        <Save className="w-4 h-4 me-2" />
+                        Import ({selectedProducts.size})
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </GlassCard>
+
+            {/* CSV Import */}
             <GlassCard className="p-8">
               <div className="max-w-2xl mx-auto text-center space-y-6">
                 <Upload className="w-16 h-16 mx-auto text-muted-foreground" />
@@ -583,6 +730,7 @@ export default function MerchantDashboard() {
                   </label>
                 </div>
                 <Button variant="outline" data-testid="button-download-template">
+                  <Download className="w-4 h-4 me-2" />
                   Download CSV Template
                 </Button>
               </div>
