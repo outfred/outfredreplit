@@ -673,10 +673,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create brand (admin only) with logo upload
   app.post("/api/admin/brands", authMiddleware, requireRole("admin", "owner"), upload.single("logo"), async (req: AuthRequest, res) => {
     try {
-      const brandData = {
+      const brandData: any = {
         nameEn: req.body.nameEn,
         nameAr: req.body.nameAr || undefined,
+        descriptionEn: req.body.descriptionEn || undefined,
+        descriptionAr: req.body.descriptionAr || undefined,
         websiteUrl: req.body.websiteUrl || undefined,
+        email: req.body.email || undefined,
+        socials: req.body.socials ? JSON.parse(req.body.socials) : undefined,
         logoUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
       };
 
@@ -694,7 +698,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const brandData: any = {};
       if (req.body.nameEn) brandData.nameEn = req.body.nameEn;
       if (req.body.nameAr) brandData.nameAr = req.body.nameAr;
+      if (req.body.descriptionEn) brandData.descriptionEn = req.body.descriptionEn;
+      if (req.body.descriptionAr) brandData.descriptionAr = req.body.descriptionAr;
       if (req.body.websiteUrl) brandData.websiteUrl = req.body.websiteUrl;
+      if (req.body.email) brandData.email = req.body.email;
+      if (req.body.socials) brandData.socials = JSON.parse(req.body.socials);
       if (req.file) brandData.logoUrl = `/uploads/${req.file.filename}`;
 
       const updateSchema = insertBrandSchema.partial().omit({ id: true });

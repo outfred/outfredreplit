@@ -1399,14 +1399,20 @@ function BrandDialog({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const { t } = useLanguage();
 
-  const form = useForm<z.infer<typeof insertBrandSchema>>({
-    resolver: zodResolver(insertBrandSchema.extend({
-      logoUrl: z.string().optional(),
-    })),
+  const form = useForm<any>({
     defaultValues: {
       nameEn: brand?.nameEn || "",
       nameAr: brand?.nameAr || "",
+      descriptionEn: brand?.descriptionEn || "",
+      descriptionAr: brand?.descriptionAr || "",
       websiteUrl: brand?.websiteUrl || "",
+      email: brand?.email || "",
+      instagram: brand?.socials?.instagram || "",
+      facebook: brand?.socials?.facebook || "",
+      twitter: brand?.socials?.twitter || "",
+      tiktok: brand?.socials?.tiktok || "",
+      youtube: brand?.socials?.youtube || "",
+      linkedin: brand?.socials?.linkedin || "",
       logoUrl: brand?.logoUrl || "",
     },
   });
@@ -1451,11 +1457,26 @@ function BrandDialog({
     },
   });
 
-  const onSubmit = (values: z.infer<typeof insertBrandSchema>) => {
+  const onSubmit = (values: any) => {
     const formData = new FormData();
     formData.append("nameEn", values.nameEn);
     if (values.nameAr) formData.append("nameAr", values.nameAr);
+    if (values.descriptionEn) formData.append("descriptionEn", values.descriptionEn);
+    if (values.descriptionAr) formData.append("descriptionAr", values.descriptionAr);
     if (values.websiteUrl) formData.append("websiteUrl", values.websiteUrl);
+    if (values.email) formData.append("email", values.email);
+    
+    const socials: any = {};
+    if (values.instagram) socials.instagram = values.instagram;
+    if (values.facebook) socials.facebook = values.facebook;
+    if (values.twitter) socials.twitter = values.twitter;
+    if (values.tiktok) socials.tiktok = values.tiktok;
+    if (values.youtube) socials.youtube = values.youtube;
+    if (values.linkedin) socials.linkedin = values.linkedin;
+    if (Object.keys(socials).length > 0) {
+      formData.append("socials", JSON.stringify(socials));
+    }
+    
     if (logoFile) formData.append("logo", logoFile);
 
     if (brand) {
@@ -1507,6 +1528,34 @@ function BrandDialog({
 
             <FormField
               control={form.control}
+              name="descriptionEn"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (English)</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-brand-desc-en" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="descriptionAr"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (Arabic)</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-brand-desc-ar" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="websiteUrl"
               render={({ field }) => (
                 <FormItem>
@@ -1519,7 +1568,81 @@ function BrandDialog({
               )}
             />
 
-            <div className="space-y-2">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" placeholder="contact@brand.com" data-testid="input-brand-email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-3 border-t border-white/10 pt-4">
+              <FormLabel className="text-base">Social Media Links</FormLabel>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <FormField control={form.control} name="instagram" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">Instagram</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://instagram.com/..." data-testid="input-brand-instagram" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="facebook" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">Facebook</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://facebook.com/..." data-testid="input-brand-facebook" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="twitter" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">Twitter/X</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://twitter.com/..." data-testid="input-brand-twitter" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="tiktok" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">TikTok</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://tiktok.com/@..." data-testid="input-brand-tiktok" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="youtube" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">YouTube</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://youtube.com/..." data-testid="input-brand-youtube" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="linkedin" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">LinkedIn</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://linkedin.com/..." data-testid="input-brand-linkedin" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+              </div>
+            </div>
+
+            <div className="space-y-2 border-t border-white/10 pt-4">
               <FormLabel>Logo</FormLabel>
               <Input
                 type="file"
