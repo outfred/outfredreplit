@@ -550,6 +550,30 @@ export class DatabaseStorage implements IStorage {
       }
     });
   }
+
+  // Footer Config
+  async getFooterConfig(): Promise<FooterConfig | undefined> {
+    const [config] = await db.select().from(footerConfig).where(eq(footerConfig.id, "singleton"));
+    return config || undefined;
+  }
+
+  async updateFooterConfig(updates: Partial<FooterConfig>): Promise<FooterConfig> {
+    const existing = await this.getFooterConfig();
+    if (existing) {
+      const [updated] = await db
+        .update(footerConfig)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(footerConfig.id, "singleton"))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(footerConfig)
+        .values({ id: "singleton", ...updates })
+        .returning();
+      return created;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
