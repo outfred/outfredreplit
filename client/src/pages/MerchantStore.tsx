@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ProductTile } from "@/components/ui/product-tile";
+import { FavoriteProductTile } from "@/components/ui/favorite-product-tile";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProductSummary } from "@shared/schema";
 import {
@@ -55,12 +55,7 @@ export default function MerchantStore() {
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductSummary[]>({
-    queryKey: ["/api/products/summary", id],
-    queryFn: async () => {
-      const res = await fetch(`/api/products/summary?merchantId=${id}`);
-      if (!res.ok) throw new Error("Failed to fetch products");
-      return res.json();
-    },
+    queryKey: [`/api/products/summary?merchantId=${id}`],
     enabled: !!id,
   });
 
@@ -203,7 +198,7 @@ export default function MerchantStore() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((product) => (
-              <ProductTile
+              <FavoriteProductTile
                 key={product.id}
                 {...product}
                 onClick={() => setLocation(`/product/${product.id}`)}

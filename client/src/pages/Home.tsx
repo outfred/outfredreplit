@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SearchBar } from "@/components/ui/search-bar";
-import { ProductTile } from "@/components/ui/product-tile";
+import { FavoriteProductTile } from "@/components/ui/favorite-product-tile";
 import { BrandBadge } from "@/components/ui/brand-badge";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Sparkles, TrendingUp, AlertCircle } from "lucide-react";
@@ -131,7 +131,7 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.map((product) => (
-              <ProductTile
+              <FavoriteProductTile
                 key={product.id}
                 {...product}
                 onClick={() => setLocation(`/product/${product.id}`)}
