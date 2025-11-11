@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ProductTile } from "@/components/ui/product-tile";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -8,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, Package, Settings as SettingsIcon, User } from "lucide-react";
 import {
   Select,
@@ -16,17 +19,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ProductSummary } from "@shared/schema";
 
 export default function Profile() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("favorites");
 
-  // Mock data
-  const favorites = [
-    { id: "1", title: "Black Hoodie", price: 799, images: ["/placeholder-product.png"], brandName: "Cairo Streetwear" },
-    { id: "2", title: "Blue Jeans", price: 899, images: ["/placeholder-product.png"], brandName: "Alexandria Fashion" },
-  ];
+  // Fetch user's favorites from API
+  const { data: favorites = [], isLoading: favoritesLoading } = useQuery<ProductSummary[]>({
+    queryKey: ["/api/favorites"],
+    enabled: !!user,
+  });
 
   const outfits = [];
   const orders = [];
@@ -41,8 +46,12 @@ export default function Profile() {
               <User className="w-12 h-12 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold mb-1" data-testid="text-profile-name">John Doe</h1>
-              <p className="text-muted-foreground" data-testid="text-profile-email">john@example.com</p>
+              <h1 className="text-3xl font-bold mb-1" data-testid="text-profile-name">
+                {user?.name || "User"}
+              </h1>
+              <p className="text-muted-foreground" data-testid="text-profile-email">
+                {user?.email || ""}
+              </p>
             </div>
           </div>
         </GlassCard>
@@ -70,16 +79,34 @@ export default function Profile() {
 
           {/* Favorites */}
           <TabsContent value="favorites">
-            {favorites.length === 0 ? (
+            {favoritesLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <GlassCard key={i} className="p-4">
+                    <Skeleton className="aspect-square rounded-xl mb-4" />
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </GlassCard>
+                ))}
+              </div>
+            ) : favorites.length === 0 ? (
               <EmptyState
                 icon={Heart}
-                title="No favorites yet"
-                description="Start adding products to your favorites"
+                title={language === "ar" ? "لا توجد مفضلات" : "No favorites yet"}
+                description={language === "ar" ? "ابدأ بإضافة المنتجات إلى المفضلة" : "Start adding products to your favorites"}
               />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {favorites.map((product) => (
-                  <ProductTile key={product.id} {...product} isFavorite />
+                  <ProductTile 
+                    key={product.id} 
+                    id={product.id}
+                    title={product.title}
+                    price={product.price}
+                    images={product.images}
+                    brandName={product.brandName || undefined}
+                    isFavorite 
+                  />
                 ))}
               </div>
             )}
