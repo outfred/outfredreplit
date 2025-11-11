@@ -49,20 +49,34 @@
   - E2E test verified: details display, favorite toggle, related products (3 items)
   - Performance note: Some endpoints exceed p95 (1.8-1.9s) - monitoring for optimization
 
+### Completed (Session 2 - November 11, 2025)
+- ✅ **Search Bug Fixed**: Homepage now filters to `published=true` products only (matching search behavior)
+- ✅ **Admin Dashboard**: Connected to real API (users, merchants, brands, metrics with mutations)
+- ✅ **CMS Database Schema**: Added 4 new tables:
+  - `navLinks` - Header navigation control (label, path, order, isEnabled)
+  - `footerConfig` - Footer config singleton (copyrightText, socialLinks JSON)
+  - `staticPages` - Static pages CMS (slug, title, content, metaDescription, isPublished)
+  - `globalShoeBrands` - Global shoe brands catalog (name, popularModels, websiteUrl) - 10 brands seeded
+- ✅ **Extended Tables**:
+  - `outfits`: Added userHeight, userWeight, aiPrompt, shoeRecommendation (JSON)
+  - `systemConfig`: Added Gemini API key support + logoUrl field
+- ✅ **Schema Changes Pushed**: `npm run db:push` successful - all tables created in database
+
 ## Current Status
 - **Server**: Running on port 5000 ✅
-- **Database**: Seeded with 48 products, 5 brands ✅
-- **Frontend**: Home & Product pages integrated with real data ✅
-- **Backend**: All API routes implemented and tested ✅
+- **Database**: Schema updated with CMS tables ✅  
+- **Frontend**: Home, Product, Admin pages integrated with real data ✅
+- **Backend**: All API routes implemented ✅
 - **Authentication**: Complete with protected routes and RBAC ✅
-- **Integration Progress**: 4/8 tasks complete
+- **Integration Progress**: 6/11 tasks (search bug fixed, schema updated)
 
-## Next Steps (Task 5+)
-1. **Search Page**: Connect to hybrid search API, implement text/image search, spell correction, filters
-2. **User Profiles & Outfits**: Integrate outfit builder with CRUD API, AI suggestions, auth-protected actions
-3. **Merchant Dashboard**: Product CRUD with ownership, CSV import, analytics, indexing trigger
-4. **Admin Dashboard**: User/merchant management, AI config, metrics, merchant approval
-5. **Polish & Testing**: Comprehensive E2E tests, RTL/LTR verification, performance optimization (<250ms p95)
+## Next Steps (Task 3+)
+1. **Admin Dashboard CRUD**: Complete merchant/product/brand management (add/edit/delete with forms)
+2. **Admin CSV Import**: Bulk product upload for merchants
+3. **Gemini AI Migration**: Replace OpenAI with Gemini across all AI features
+4. **Complete Outfit Builder**: Height/weight input, AI prompt, outfit generation (top+bottom+global shoes)
+5. **CMS Features**: Header nav control, Footer config, Privacy/Contact pages with WYSIWYG editor
+6. **Logo Upload**: Replace "Outfred" text with admin-uploadable logo
 
 ## Running the Project
 ```bash

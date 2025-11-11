@@ -95,6 +95,15 @@ export const outfits = pgTable("outfits", {
   title: text("title").notNull(),
   notes: text("notes"),
   coverImage: text("cover_image"),
+  userHeight: integer("user_height"),
+  userWeight: integer("user_weight"),
+  aiPrompt: text("ai_prompt"),
+  shoeRecommendation: jsonb("shoe_recommendation").$type<{
+    brand: string;
+    model: string;
+    imageUrl?: string;
+    link?: string;
+  }>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -131,8 +140,10 @@ export const systemConfig = pgTable("system_config", {
   providerKeys: jsonb("provider_keys").$type<{
     huggingface?: string;
     openai?: string;
+    gemini?: string;
   }>(),
   synonyms: jsonb("synonyms").$type<Record<string, string>>().default({}),
+  logoUrl: text("logo_url"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -162,6 +173,58 @@ export const indexingJobs = pgTable("indexing_jobs", {
   failures: integer("failures").notNull().default(0),
   startedAt: timestamp("started_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),
+});
+
+// CMS: Navigation Links table
+export const navLinks = pgTable("nav_links", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  label: text("label").notNull(),
+  path: text("path").notNull(),
+  order: integer("order").notNull().default(0),
+  isExternal: boolean("is_external").notNull().default(false),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  orderIdx: index("nav_links_order_idx").on(table.order),
+}));
+
+// CMS: Footer Config table (singleton)
+export const footerConfig = pgTable("footer_config", {
+  id: varchar("id").primaryKey().default("singleton"),
+  copyrightText: text("copyright_text").notNull().default("© 2025 Outfred. All rights reserved."),
+  socialLinks: jsonb("social_links").$type<{
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    tiktok?: string;
+    youtube?: string;
+    linkedin?: string;
+  }>(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// CMS: Static Pages table
+export const staticPages = pgTable("static_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  metaDescription: text("meta_description"),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Global Shoe Brands (for outfit builder)
+export const globalShoeBrands = pgTable("global_shoe_brands", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  logoUrl: text("logo_url"),
+  popularModels: text("popular_models").array(),
+  websiteUrl: text("website_url"),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Relations
@@ -260,6 +323,28 @@ export const insertMetricSchema = createInsertSchema(metrics).omit({
   createdAt: true,
 });
 
+export const insertNavLinkSchema = createInsertSchema(navLinks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFooterConfigSchema = createInsertSchema(footerConfig).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertStaticPageSchema = createInsertSchema(staticPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGlobalShoeBrandSchema = createInsertSchema(globalShoeBrands).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -286,6 +371,18 @@ export type Metric = typeof metrics.$inferSelect;
 export type InsertMetric = z.infer<typeof insertMetricSchema>;
 
 export type IndexingJob = typeof indexingJobs.$inferSelect;
+
+export type NavLink = typeof navLinks.$inferSelect;
+export type InsertNavLink = z.infer<typeof insertNavLinkSchema>;
+
+export type FooterConfig = typeof footerConfig.$inferSelect;
+export type InsertFooterConfig = z.infer<typeof insertFooterConfigSchema>;
+
+export type StaticPage = typeof staticPages.$inferSelect;
+export type InsertStaticPage = z.infer<typeof insertStaticPageSchema>;
+
+export type GlobalShoeBrand = typeof globalShoeBrands.$inferSelect;
+export type InsertGlobalShoeBrand = z.infer<typeof insertGlobalShoeBrandSchema>;
 
 // ProductSummary for enriched product data with brand name and normalized price
 export const productSummarySchema = z.object({

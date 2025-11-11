@@ -1,6 +1,8 @@
 import { storage } from "./storage";
+import { db } from "./db";
 import { hashPassword } from "./lib/auth";
 import { pathToFileURL } from "url";
+import { globalShoeBrands, navLinks, footerConfig, staticPages } from "@shared/schema";
 
 const products = [
   // Cairo Streetwear Products
@@ -196,6 +198,113 @@ export async function seedDatabase() {
     });
 
     console.log("✅ System config initialized");
+
+    // Seed Global Shoe Brands
+    console.log("Seeding global shoe brands...");
+    const shoeBrands = [
+      { name: "Nike", popularModels: ["Air Force 1", "Air Jordan", "Air Max"], websiteUrl: "https://www.nike.com" },
+      { name: "Adidas", popularModels: ["Superstar", "Stan Smith", "Yeezy"], websiteUrl: "https://www.adidas.com" },
+      { name: "Puma", popularModels: ["Suede Classic", "RS-X", "Clyde"], websiteUrl: "https://www.puma.com" },
+      { name: "Reebok", popularModels: ["Classic Leather", "Club C", "Nano"], websiteUrl: "https://www.reebok.com" },
+      { name: "New Balance", popularModels: ["574", "990", "Fresh Foam"], websiteUrl: "https://www.newbalance.com" },
+      { name: "Converse", popularModels: ["Chuck Taylor", "One Star", "Jack Purcell"], websiteUrl: "https://www.converse.com" },
+      { name: "Vans", popularModels: ["Old Skool", "Sk8-Hi", "Authentic"], websiteUrl: "https://www.vans.com" },
+      { name: "Under Armour", popularModels: ["HOVR", "Charged", "Curry"], websiteUrl: "https://www.underarmour.com" },
+      { name: "Fila", popularModels: ["Disruptor", "Ray", "Grant Hill"], websiteUrl: "https://www.fila.com" },
+      { name: "Jordan", popularModels: ["Air Jordan 1", "Air Jordan 4", "Air Jordan 11"], websiteUrl: "https://www.nike.com/jordan" },
+    ];
+
+    try {
+      for (const brand of shoeBrands) {
+        await db.insert(globalShoeBrands).values(brand).onConflictDoUpdate({
+          target: globalShoeBrands.name,
+          set: { websiteUrl: brand.websiteUrl, popularModels: brand.popularModels }
+        });
+      }
+      console.log(`✅ Seeded ${shoeBrands.length} global shoe brands`);
+    } catch (error) {
+      console.log("⚠️ Global shoe brands may already exist, skipping...");
+    }
+
+    // Seed Default Navigation Links
+    console.log("Seeding default navigation links...");
+    const navLinksData = [
+      { label: "Home", path: "/", order: 0, isEnabled: true },
+      { label: "Search", path: "/search", order: 1, isEnabled: true },
+      { label: "Outfit Builder", path: "/outfit-builder", order: 2, isEnabled: true },
+      { label: "Brands", path: "/search?view=brands", order: 3, isEnabled: true },
+    ];
+
+    try {
+      await db.insert(navLinks).values(navLinksData);
+      console.log(`✅ Seeded ${navLinksData.length} navigation links`);
+    } catch (error) {
+      console.log("⚠️ Navigation links may already exist, skipping...");
+    }
+
+    // Seed Default Footer Config
+    console.log("Seeding default footer config...");
+    try {
+      await db.insert(footerConfig).values({
+        id: "singleton",
+        copyrightText: "© 2025 Outfred. جميع الحقوق محفوظة.",
+        socialLinks: {
+          instagram: "https://instagram.com/outfred",
+          facebook: "https://facebook.com/outfred",
+          twitter: "https://twitter.com/outfred",
+        },
+      }).onConflictDoUpdate({
+        target: footerConfig.id,
+        set: {
+          copyrightText: "© 2025 Outfred. جميع الحقوق محفوظة.",
+          socialLinks: {
+            instagram: "https://instagram.com/outfred",
+            facebook: "https://facebook.com/outfred",
+            twitter: "https://twitter.com/outfred",
+          },
+        }
+      });
+      console.log("✅ Seeded footer config");
+    } catch (error) {
+      console.log("⚠️ Footer config may already exist, skipping...");
+    }
+
+    // Seed Default Static Pages
+    console.log("Seeding default static pages...");
+    const staticPagesData = [
+      {
+        slug: "privacy-policy",
+        title: "Privacy Policy",
+        content: "<h1>Privacy Policy</h1><p>Your privacy is important to us. This policy explains how we collect, use, and protect your personal information.</p>",
+        metaDescription: "Learn about how Outfred protects your privacy and handles your data.",
+        isPublished: true,
+      },
+      {
+        slug: "contact-us",
+        title: "Contact Us",
+        content: "<h1>Contact Us</h1><p>Get in touch with the Outfred team. We'd love to hear from you!</p><p>Email: support@outfred.com</p>",
+        metaDescription: "Contact Outfred - Get in touch with our support team.",
+        isPublished: true,
+      },
+    ];
+
+    try {
+      for (const page of staticPagesData) {
+        await db.insert(staticPages).values(page).onConflictDoUpdate({
+          target: staticPages.slug,
+          set: { 
+            title: page.title,
+            content: page.content,
+            metaDescription: page.metaDescription,
+            isPublished: page.isPublished
+          }
+        });
+      }
+      console.log(`✅ Seeded ${staticPagesData.length} static pages`);
+    } catch (error) {
+      console.log("⚠️ Static pages may already exist, skipping...");
+    }
+
     console.log("\n🎉 Database seed completed successfully!");
     console.log("\nDefault credentials:");
     console.log("  Owner: owner@outfred.com / Owner#123");
