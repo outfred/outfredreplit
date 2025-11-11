@@ -69,6 +69,13 @@
   - Full CRUD: Create/update/delete with logo persistence
   - Hot reload safety: registerRoutes guard prevents duplicate middleware/routes
   - Image search: uploadMemory instance for buffer support
+- ✅ **Gemini AI Migration** (Task 6):
+  - Replaced OpenAI with Google Gemini across all AI features
+  - Text embeddings: text-embedding-004 model (768 dimensions)
+  - Image embeddings: Vision model (gemini-2.0-flash-lite) describes image → embed description
+  - Outfit suggestions: gemini-2.0-flash-lite with JSON response parsing
+  - Admin UI: Gemini provider option + API key input
+  - Error handling: Fallback to random embeddings on failure
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
@@ -76,13 +83,13 @@
 - **Frontend**: Home, Product, Admin pages integrated with real data ✅
 - **Backend**: All API routes implemented, registerRoutes hot-reload safe ✅
 - **Authentication**: Complete with protected routes and RBAC ✅
-- **Integration Progress**: 5/11 tasks completed (Tasks 1-5)
+- **AI**: Migrated to Gemini API (text/image embeddings, outfit suggestions) ✅
+- **Integration Progress**: 6/11 tasks completed (Tasks 1-6)
 
-## Next Steps (Task 6+)
-1. **Gemini AI Migration** (Task 6 - IN PROGRESS): Replace OpenAI with Gemini across all AI features (embeddings, outfit suggestions, search)
-2. **Complete Outfit Builder** (Task 7): Height/weight input, AI prompt, outfit generation (top+bottom from DB + shoes from global brands)
-3. **CMS Features** (Tasks 8-10): Header nav control, Footer config, Privacy/Contact pages with WYSIWYG editor
-4. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
+## Next Steps (Task 7+)
+1. **Complete Outfit Builder** (Task 7 - IN PROGRESS): Height/weight input, AI prompt, outfit generation (top+bottom from DB + shoes from global brands)
+2. **CMS Features** (Tasks 8-10): Header nav control, Footer config, Privacy/Contact pages with WYSIWYG editor
+3. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
 
 ## Running the Project
 ```bash
