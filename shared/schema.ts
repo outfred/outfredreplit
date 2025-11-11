@@ -179,7 +179,8 @@ export const indexingJobs = pgTable("indexing_jobs", {
 // CMS: Navigation Links table
 export const navLinks = pgTable("nav_links", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  label: text("label").notNull(),
+  labelEn: text("label_en").notNull(),
+  labelAr: text("label_ar").notNull(),
   path: text("path").notNull(),
   order: integer("order").notNull().default(0),
   isExternal: boolean("is_external").notNull().default(false),

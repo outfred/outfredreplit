@@ -8,7 +8,7 @@ import { authMiddleware, requireRole, type AuthRequest } from "./middleware/auth
 import { createEmbeddingProvider, spellCorrector } from "./lib/ai-providers";
 import { metricsMiddleware } from "./lib/metrics";
 import { z } from "zod";
-import { insertUserSchema, insertMerchantSchema, insertBrandSchema, insertProductSchema, insertOutfitSchema } from "@shared/schema";
+import { insertUserSchema, insertMerchantSchema, insertBrandSchema, insertProductSchema, insertOutfitSchema, insertNavLinkSchema } from "@shared/schema";
 import path from "path";
 import { fileURLToPath } from "url";
 import { mkdirSync } from "fs";
@@ -1040,6 +1040,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Image generation failed" });
+    }
+  });
+
+  // ===== NAVIGATION LINKS ROUTES =====
+
+  // Public: Get enabled nav links
+  app.get("/api/nav-links", async (req, res) => {
+    try {
+      const links = await storage.listNavLinks();
+      res.json(links);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch navigation links" });
+    }
+  });
+
+  // Admin: Get all nav links
+  app.get("/api/admin/nav-links", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const links = await storage.listNavLinksAdmin();
+      res.json(links);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch navigation links" });
+    }
+  });
+
+  // Admin: Create nav link
+  app.post("/api/admin/nav-links", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const navLinkValidationSchema = insertNavLinkSchema.extend({
+        labelEn: z.string().min(1).max(64),
+        labelAr: z.string().min(1).max(64),
+        path: z.string().min(1).max(256).refine(
+          (path) => path.startsWith("/") || path.startsWith("http"),
+          { message: "Path must start with / (internal) or http (external)" }
+        ),
+        order: z.number().min(0),
+      });
+      
+      const data = navLinkValidationSchema.parse(req.body);
+      const link = await storage.createNavLink(data);
+      res.status(201).json(link);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Invalid input" });
+    }
+  });
+
+  // Admin: Update nav link
+  app.patch("/api/admin/nav-links/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const navLinkUpdateSchema = insertNavLinkSchema.partial().extend({
+        labelEn: z.string().min(1).max(64).optional(),
+        labelAr: z.string().min(1).max(64).optional(),
+        path: z.string().min(1).max(256).refine(
+          (path) => path.startsWith("/") || path.startsWith("http"),
+          { message: "Path must start with / (internal) or http (external)" }
+        ).optional(),
+        order: z.number().min(0).optional(),
+      });
+      
+      const data = navLinkUpdateSchema.parse(req.body);
+      const link = await storage.updateNavLink(req.params.id, data);
+      res.json(link);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to update navigation link" });
+    }
+  });
+
+  // Admin: Delete nav link
+  app.delete("/api/admin/nav-links/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteNavLink(req.params.id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to delete navigation link" });
+    }
+  });
+
+  // Admin: Reorder nav links
+  app.patch("/api/admin/nav-links/batch/reorder", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const { updates } = z.object({
+        updates: z.array(z.object({
+          id: z.string(),
+          order: z.number().min(0),
+        })),
+      }).parse(req.body);
+      
+      await storage.reorderNavLinks(updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to reorder navigation links" });
     }
   });
 

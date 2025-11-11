@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<
-    "users" | "merchants" | "products" | "brands" | "ai" | "metrics" | "config"
+    "users" | "merchants" | "products" | "brands" | "navigation" | "ai" | "metrics" | "config"
   >("users");
   
   // Merchant Dialog State

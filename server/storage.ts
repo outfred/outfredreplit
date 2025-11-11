@@ -8,6 +8,7 @@ import {
   systemConfig,
   metrics,
   indexingJobs,
+  navLinks,
   type User,
   type InsertUser,
   type Merchant,
@@ -26,6 +27,8 @@ import {
   type Metric,
   type InsertMetric,
   type IndexingJob,
+  type NavLink,
+  type InsertNavLink,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, like, sql, inArray } from "drizzle-orm";
@@ -100,6 +103,14 @@ export interface IStorage {
   createIndexingJob(job: Partial<IndexingJob>): Promise<IndexingJob>;
   updateIndexingJob(id: string, updates: Partial<IndexingJob>): Promise<IndexingJob>;
   getLatestIndexingJob(): Promise<IndexingJob | undefined>;
+
+  // Navigation Links
+  listNavLinks(): Promise<NavLink[]>;
+  listNavLinksAdmin(): Promise<NavLink[]>;
+  createNavLink(link: InsertNavLink): Promise<NavLink>;
+  updateNavLink(id: string, updates: Partial<NavLink>): Promise<NavLink>;
+  deleteNavLink(id: string): Promise<void>;
+  reorderNavLinks(updates: { id: string; order: number }[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -484,6 +495,54 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(indexingJobs.startedAt))
       .limit(1);
     return job || undefined;
+  }
+
+  // Navigation Links
+  async listNavLinks(): Promise<NavLink[]> {
+    return await db
+      .select()
+      .from(navLinks)
+      .where(eq(navLinks.isEnabled, true))
+      .orderBy(asc(navLinks.order));
+  }
+
+  async listNavLinksAdmin(): Promise<NavLink[]> {
+    return await db
+      .select()
+      .from(navLinks)
+      .orderBy(asc(navLinks.order));
+  }
+
+  async createNavLink(link: InsertNavLink): Promise<NavLink> {
+    const [created] = await db
+      .insert(navLinks)
+      .values(link)
+      .returning();
+    return created;
+  }
+
+  async updateNavLink(id: string, updates: Partial<NavLink>): Promise<NavLink> {
+    const [updated] = await db
+      .update(navLinks)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(navLinks.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteNavLink(id: string): Promise<void> {
+    await db.delete(navLinks).where(eq(navLinks.id, id));
+  }
+
+  async reorderNavLinks(updates: { id: string; order: number }[]): Promise<void> {
+    await db.transaction(async (tx) => {
+      for (const { id, order } of updates) {
+        await tx
+          .update(navLinks)
+          .set({ order, updatedAt: new Date() })
+          .where(eq(navLinks.id, id));
+      }
+    });
   }
 }
 

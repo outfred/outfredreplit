@@ -229,10 +229,10 @@ export async function seedDatabase() {
     // Seed Default Navigation Links
     console.log("Seeding default navigation links...");
     const navLinksData = [
-      { label: "Home", path: "/", order: 0, isEnabled: true },
-      { label: "Search", path: "/search", order: 1, isEnabled: true },
-      { label: "Outfit Builder", path: "/outfit-builder", order: 2, isEnabled: true },
-      { label: "Brands", path: "/search?view=brands", order: 3, isEnabled: true },
+      { labelEn: "Home", labelAr: "الرئيسية", path: "/", order: 0, isEnabled: true },
+      { labelEn: "Search", labelAr: "البحث", path: "/search", order: 1, isEnabled: true },
+      { labelEn: "Outfit Builder", labelAr: "مصمم الأزياء", path: "/outfit-builder", order: 2, isEnabled: true },
+      { labelEn: "Brands", labelAr: "العلامات التجارية", path: "/search?view=brands", order: 3, isEnabled: true },
     ];
 
     try {
