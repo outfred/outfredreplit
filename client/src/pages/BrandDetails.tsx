@@ -2,7 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ProductTile } from "@/components/ui/product-tile";
+import { FavoriteProductTile } from "@/components/ui/favorite-product-tile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -39,12 +39,7 @@ export default function BrandDetails() {
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductSummary[]>({
-    queryKey: ["/api/products/summary", id],
-    queryFn: async () => {
-      const res = await fetch(`/api/products/summary?brandId=${id}`);
-      if (!res.ok) throw new Error("Failed to fetch products");
-      return res.json();
-    },
+    queryKey: [`/api/products/summary?brandId=${id}`],
     enabled: !!id,
   });
 
@@ -206,7 +201,7 @@ export default function BrandDetails() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map((product) => (
-              <ProductTile
+              <FavoriteProductTile
                 key={product.id}
                 {...product}
                 onClick={() => setLocation(`/product/${product.id}`)}

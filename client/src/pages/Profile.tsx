@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ProductTile } from "@/components/ui/product-tile";
+import { FavoriteProductTile } from "@/components/ui/favorite-product-tile";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -101,14 +101,13 @@ export default function Profile() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {favorites.map((product) => (
-                  <ProductTile 
+                  <FavoriteProductTile 
                     key={product.id} 
                     id={product.id}
                     title={product.title}
                     price={product.price}
                     images={product.images}
                     brandName={product.brandName || undefined}
-                    isFavorite 
                   />
                 ))}
               </div>
