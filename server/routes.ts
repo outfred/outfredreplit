@@ -767,7 +767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Scrape product from URL
+  // Scrape product(s) from URL - supports single products and Shopify collections
   app.post("/api/merchant/scrape-product", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {
       const { url } = req.body;
@@ -786,9 +786,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid URL format" });
       }
 
-      // Fetch HTML from URL with timeout and user agent
+      // Check if this is a Shopify collection URL
+      const isShopifyCollection = url.includes('/collections/');
+      
+      if (isShopifyCollection) {
+        // Try Shopify JSON API first
+        try {
+          // Normalize URL: remove query params and trailing slashes
+          const baseUrl = url.replace(/\?.*$/, '').replace(/\/+$/, '');
+          const jsonUrl = baseUrl + '/products.json?limit=250';
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+          const jsonResponse = await fetch(jsonUrl, {
+            signal: controller.signal,
+            headers: { 'User-Agent': 'Outfred Product Importer/1.0' },
+          });
+          clearTimeout(timeoutId);
+
+          if (jsonResponse.ok) {
+            const data: any = await jsonResponse.json();
+            const products: any[] = data.products || [];
+
+            // Convert Shopify products to our format
+            const scrapedProducts = products.slice(0, 50).map((p) => {
+              const variant = p.variants?.[0] || {};
+              const price = parseFloat(variant.price || p.price || '0');
+              
+              return {
+                title: p.title || 'Untitled Product',
+                description: p.body_html ? String(p.body_html).replace(/<[^>]+>/g, '').substring(0, 500) : '',
+                price: price,
+                images: (p.images || []).slice(0, 5).map((img: { src: string }) => img.src),
+                sourceUrl: `${parsedUrl.origin}/products/${p.handle}`,
+                tags: p.tags ? String(p.tags).split(',').map((t) => t.trim()) : [],
+                vendor: p.vendor || undefined,
+              };
+            });
+
+            return res.json({
+              type: 'collection',
+              count: scrapedProducts.length,
+              products: scrapedProducts,
+              sourceUrl: url,
+            });
+          }
+        } catch (err) {
+          // Fall through to HTML scraping
+          console.log('Shopify JSON API failed, falling back to HTML scraping');
+        }
+      }
+
+      // HTML scraping (for single products or fallback)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(url, {
         signal: controller.signal,
@@ -805,6 +856,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const html = await response.text();
       const { load } = await import("cheerio");
       const $ = load(html);
+
+      // Sanitize text helper
+      const sanitizeText = (text: string) => {
+        return text
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/<[^>]+>/g, '')
+          .trim();
+      };
 
       // Extract product data using common e-commerce patterns
       let title = 
@@ -845,7 +904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Ensure absolute URLs
-      const baseUrl = new URL(url).origin;
+      const baseUrl = parsedUrl.origin;
       const absoluteImages = images.map(img => {
         if (img.startsWith('http')) return img;
         if (img.startsWith('//')) return 'https:' + img;
@@ -853,19 +912,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return baseUrl + '/' + img;
       });
 
-      // Sanitize text data to prevent XSS
-      const sanitizeText = (text: string) => {
-        return text
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-          .replace(/<[^>]+>/g, '')
-          .trim();
-      };
-
+      // Single product response
       res.json({
+        type: 'single',
         title: sanitizeText(title || 'Untitled Product'),
         description: sanitizeText(description || '').substring(0, 500),
         price: price || 0,
-        images: absoluteImages.slice(0, 5), // Max 5 images
+        images: absoluteImages.slice(0, 5),
         sourceUrl: url,
       });
     } catch (error: any) {

@@ -58,12 +58,8 @@ export default function MerchantDashboard() {
   // Scraper dialog state
   const [scraperOpen, setScraperOpen] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState("");
-  const [scrapedData, setScrapedData] = useState<{
-    title: string;
-    description: string;
-    price: number;
-    images: string[];
-  } | null>(null);
+  const [scrapedData, setScrapedData] = useState<any | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set());
 
   // Product dialog state (for create/edit)
   const [productDialog, setProductDialog] = useState<{
@@ -250,9 +246,9 @@ export default function MerchantDashboard() {
     scrapeMutation.mutate(scrapeUrl);
   };
 
-  // Handle save scraped product
+  // Handle save scraped product (single product)
   const handleSaveScraped = () => {
-    if (!scrapedData) return;
+    if (!scrapedData || scrapedData.type !== 'single') return;
     setProductForm({
       title: scrapedData.title,
       description: scrapedData.description,
@@ -260,6 +256,95 @@ export default function MerchantDashboard() {
       images: scrapedData.images.length > 0 ? scrapedData.images : [""],
     });
     setProductDialog({ open: true, initialData: scrapedData });
+    setScraperOpen(false);
+  };
+
+  // Handle import selected products from collection
+  const handleImportSelected = async () => {
+    if (!scrapedData || scrapedData.type !== 'collection') return;
+    if (selectedProducts.size === 0) {
+      toast({ title: "Error", description: "Please select at least one product", variant: "destructive" });
+      return;
+    }
+
+    const productsToImport = scrapedData.products.filter((_: any, idx: number) => 
+      selectedProducts.has(idx)
+    );
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Show progress toast
+    toast({ 
+      title: `Importing ${productsToImport.length} products...`,
+      description: "Please wait, this may take a moment"
+    });
+
+    try {
+      for (const product of productsToImport) {
+        try {
+          await apiRequest("/api/products", "POST", {
+            title: product.title,
+            description: product.description,
+            priceCents: Math.round(product.price * 100),
+            images: product.images.filter((img: string) => img?.trim()).length > 0 
+              ? product.images.filter((img: string) => img?.trim()) 
+              : [],
+            published: true,
+          });
+          successCount++;
+        } catch (err) {
+          failCount++;
+        }
+      }
+      
+      // Invalidate queries after all imports
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      
+      // Show summary
+      if (failCount === 0) {
+        toast({ 
+          title: `Successfully imported ${successCount} products!`,
+          description: "All selected products have been added to your store"
+        });
+      } else {
+        toast({ 
+          title: `Imported ${successCount} of ${productsToImport.length} products`,
+          description: `${failCount} products failed to import`,
+          variant: "destructive"
+        });
+      }
+      
+      // Close dialog and reset
+      setScraperOpen(false);
+      setScrapedData(null);
+      setSelectedProducts(new Set());
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to import products", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  // Toggle product selection
+  const toggleProductSelection = (index: number) => {
+    const newSelection = new Set(selectedProducts);
+    if (newSelection.has(index)) {
+      newSelection.delete(index);
+    } else {
+      newSelection.add(index);
+    }
+    setSelectedProducts(newSelection);
+  };
+
+  // Select all products
+  const selectAllProducts = () => {
+    if (!scrapedData || scrapedData.type !== 'collection') return;
+    const allIndices = new Set<number>(scrapedData.products.map((_: any, idx: number) => idx));
+    setSelectedProducts(allIndices);
   };
 
   // Handle open create dialog
@@ -608,23 +693,26 @@ export default function MerchantDashboard() {
 
         {/* Product Scraper Dialog */}
         <Dialog open={scraperOpen} onOpenChange={setScraperOpen}>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Scrape Product from URL</DialogTitle>
+              <DialogTitle>Import Products from URL</DialogTitle>
               <DialogDescription>
-                Enter a product URL to automatically extract product details
+                Enter a product URL or Shopify collection URL to import products
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Product URL</Label>
+                <Label>Product/Collection URL</Label>
                 <Input
-                  placeholder="https://example.com/product/..."
+                  placeholder="https://example.com/collections/all or https://example.com/products/item"
                   value={scrapeUrl}
                   onChange={(e) => setScrapeUrl(e.target.value)}
                   data-testid="input-scrape-url"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Supports: Single products, Shopify collections (/collections/all)
+                </p>
               </div>
 
               <Button
@@ -641,14 +729,15 @@ export default function MerchantDashboard() {
                 ) : (
                   <>
                     <Globe className="w-4 h-4 me-2" />
-                    Scrape Product
+                    Fetch Products
                   </>
                 )}
               </Button>
 
-              {scrapedData && (
+              {/* Single Product Preview */}
+              {scrapedData && scrapedData.type === 'single' && (
                 <div className="border border-white/20 rounded-xl p-4 space-y-3">
-                  <h3 className="font-semibold">Scraped Data</h3>
+                  <h3 className="font-semibold">Product Found</h3>
                   <div className="space-y-2 text-sm">
                     <div>
                       <span className="font-medium">Title:</span> {scrapedData.title}
@@ -672,8 +761,93 @@ export default function MerchantDashboard() {
                     data-testid="button-use-scraped-data"
                   >
                     <Save className="w-4 h-4 me-2" />
-                    Use This Data
+                    Add to Products
                   </Button>
+                </div>
+              )}
+
+              {/* Collection Products List */}
+              {scrapedData && scrapedData.type === 'collection' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">
+                      Found {scrapedData.count} Products
+                    </h3>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={selectAllProducts}
+                        data-testid="button-select-all"
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedProducts(new Set())}
+                        data-testid="button-deselect-all"
+                      >
+                        Deselect All
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {scrapedData.products.map((product: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className={`border border-white/20 rounded-lg p-3 flex items-center gap-3 cursor-pointer hover-elevate ${
+                          selectedProducts.has(idx) ? 'bg-primary/10 border-primary/30' : ''
+                        }`}
+                        onClick={() => toggleProductSelection(idx)}
+                        data-testid={`product-item-${idx}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedProducts.has(idx)}
+                          onChange={() => toggleProductSelection(idx)}
+                          className="w-4 h-4"
+                          data-testid={`checkbox-product-${idx}`}
+                        />
+                        <img
+                          src={product.images[0] || "/placeholder-product.png"}
+                          alt={product.title}
+                          className="w-16 h-16 rounded object-cover"
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{product.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {product.price} EGP • {product.images.length} images
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {selectedProducts.size} of {scrapedData.count} products selected
+                    </p>
+                    <Button
+                      onClick={handleImportSelected}
+                      disabled={selectedProducts.size === 0 || createProductMutation.isPending}
+                      className="w-full"
+                      data-testid="button-import-selected"
+                    >
+                      {createProductMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin me-2" />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 me-2" />
+                          Import Selected ({selectedProducts.size})
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
