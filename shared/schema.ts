@@ -286,3 +286,27 @@ export type Metric = typeof metrics.$inferSelect;
 export type InsertMetric = z.infer<typeof insertMetricSchema>;
 
 export type IndexingJob = typeof indexingJobs.$inferSelect;
+
+// ProductSummary for enriched product data with brand name and normalized price
+export const productSummarySchema = z.object({
+  id: z.string(),
+  merchantId: z.string(),
+  brandId: z.string().nullable(),
+  brandName: z.string().nullable(),
+  title: z.string(),
+  description: z.string().nullable(),
+  price: z.number(),
+  currency: z.string(),
+  colors: z.array(z.string()).nullable(),
+  sizes: z.array(z.string()).nullable(),
+  fit: z.string().nullable(),
+  gender: z.string().nullable(),
+  tags: z.array(z.string()).nullable(),
+  images: z.array(z.string()),
+  published: z.boolean(),
+  views: z.number(),
+  clicks: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ProductSummary = z.infer<typeof productSummarySchema>;

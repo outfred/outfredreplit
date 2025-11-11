@@ -113,11 +113,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== PRODUCTS ROUTES =====
   
-  // List products
+  // List products (returns canonical Product objects)
   app.get("/api/products", async (req, res) => {
     try {
       const { merchantId, brandId, published, search } = req.query;
       const products = await storage.listProducts({
+        merchantId: merchantId as string,
+        brandId: brandId as string,
+        published: published === "true" ? true : published === "false" ? false : undefined,
+        search: search as string,
+      });
+      res.json(products);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch products" });
+    }
+  });
+
+  // List product summaries (returns enriched ProductSummary with brandName and normalized price)
+  app.get("/api/products/summary", async (req, res) => {
+    try {
+      const { merchantId, brandId, published, search } = req.query;
+      const products = await storage.listProductSummaries({
         merchantId: merchantId as string,
         brandId: brandId as string,
         published: published === "true" ? true : published === "false" ? false : undefined,

@@ -116,6 +116,9 @@ export const translations = {
     active: "Active",
     pending: "Pending",
     banned: "Banned",
+    retry: "Retry",
+    errorLoadingBrands: "Failed to load brands. Please try again.",
+    errorLoadingProducts: "Failed to load products. Please try again.",
   },
   ar: {
     // Navigation
@@ -232,6 +235,9 @@ export const translations = {
     active: "نشط",
     pending: "قيد الانتظار",
     banned: "محظور",
+    retry: "إعادة المحاولة",
+    errorLoadingBrands: "فشل تحميل العلامات التجارية. يرجى المحاولة مرة أخرى.",
+    errorLoadingProducts: "فشل تحميل المنتجات. يرجى المحاولة مرة أخرى.",
   },
 };
 

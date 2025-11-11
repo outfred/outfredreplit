@@ -16,6 +16,7 @@ import {
   type InsertBrand,
   type Product,
   type InsertProduct,
+  type ProductSummary,
   type Outfit,
   type InsertOutfit,
   type Favorite,
@@ -65,6 +66,12 @@ export interface IStorage {
     published?: boolean;
     search?: string;
   }): Promise<Product[]>;
+  listProductSummaries(filters?: {
+    merchantId?: string;
+    brandId?: string;
+    published?: boolean;
+    search?: string;
+  }): Promise<ProductSummary[]>;
   getProductsNeedingIndexing(): Promise<Product[]>;
 
   // Outfits
@@ -267,13 +274,66 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(products.createdAt));
   }
 
+  async listProductSummaries(filters?: {
+    merchantId?: string;
+    brandId?: string;
+    published?: boolean;
+    search?: string;
+  }): Promise<ProductSummary[]> {
+    const conditions = [];
+    if (filters?.merchantId) {
+      conditions.push(eq(products.merchantId, filters.merchantId));
+    }
+    if (filters?.brandId) {
+      conditions.push(eq(products.brandId, filters.brandId));
+    }
+    if (filters?.published !== undefined) {
+      conditions.push(eq(products.published, filters.published));
+    }
+    if (filters?.search) {
+      conditions.push(like(products.title, `%${filters.search}%`));
+    }
+
+    const rows = await db
+      .select({
+        product: products,
+        brand: brands,
+      })
+      .from(products)
+      .leftJoin(brands, eq(products.brandId, brands.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(products.createdAt));
+
+    return rows.map(({ product, brand }) => ({
+      id: product.id,
+      merchantId: product.merchantId,
+      brandId: product.brandId,
+      brandName: brand?.name || null,
+      title: product.title,
+      description: product.description,
+      price: product.priceCents / 100,
+      currency: product.currency,
+      colors: product.colors,
+      sizes: product.sizes,
+      fit: product.fit,
+      gender: product.gender,
+      tags: product.tags,
+      images: product.images,
+      published: product.published,
+      views: product.views,
+      clicks: product.clicks,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+    }));
+  }
+
   async getProductsNeedingIndexing(): Promise<Product[]> {
     return await db
       .select()
       .from(products)
       .where(
         or(
-          eq(products.lastIndexedAt, null),
+          sql`${products.lastIndexedAt} IS NULL`,
           sql`${products.updatedAt} > ${products.lastIndexedAt}`
         )
       )
