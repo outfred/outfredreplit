@@ -135,10 +135,8 @@ export default function Register() {
         <div className="mt-6 text-center text-sm">
           <p className="text-muted-foreground">
             {t("auth.hasAccount", "Already have an account?")}{" "}
-            <Link href="/login">
-              <a className="text-primary hover:underline" data-testid="link-login">
-                {t("auth.login", "Login")}
-              </a>
+            <Link href="/login" className="text-primary hover:underline" data-testid="link-login">
+              {t("auth.login", "Login")}
             </Link>
           </p>
         </div>
