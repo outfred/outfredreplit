@@ -76,20 +76,34 @@
   - Outfit suggestions: gemini-2.0-flash-lite with JSON response parsing
   - Admin UI: Gemini provider option + API key input
   - Error handling: Fallback to random embeddings on failure
+- ✅ **Outfit Builder Redesign** (Task 7):
+  - Backend: POST /api/outfit/ai with Zod validation (height 100-250cm, weight 30-200kg)
+  - Gemini Integration: Uses createOutfitSuggestionProvider with API key from system config
+  - Frontend: Height/weight number inputs, AI prompt textarea with icons
+  - Generate Button: GlowButton with loading state (Loader2 spinner)
+  - TanStack Query: Real products from /api/products/summary
+  - AI Suggestion Display: Top product, bottom product, shoe recommendation cards
+  - Reasoning Display: AI explanation of outfit choices
+  - Auto-select: Top+bottom products added to selected items
+  - Toast Notifications: Success/error messages
+  - Authentication: Bearer token in fetch headers
+  - Fallback: Simple rule-based suggestions if Gemini not configured
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
 - **Database**: Schema updated with CMS tables, brands migrated to bilingual ✅  
-- **Frontend**: Home, Product, Admin pages integrated with real data ✅
+- **Frontend**: Home, Product, Admin, OutfitBuilder pages integrated with real data ✅
 - **Backend**: All API routes implemented, registerRoutes hot-reload safe ✅
 - **Authentication**: Complete with protected routes and RBAC ✅
 - **AI**: Migrated to Gemini API (text/image embeddings, outfit suggestions) ✅
-- **Integration Progress**: 6/11 tasks completed (Tasks 1-6)
+- **Outfit Builder**: Complete with AI form, Gemini integration, product display ✅
+- **Integration Progress**: 7/11 tasks completed (Tasks 1-7)
 
-## Next Steps (Task 7+)
-1. **Complete Outfit Builder** (Task 7 - IN PROGRESS): Height/weight input, AI prompt, outfit generation (top+bottom from DB + shoes from global brands)
-2. **CMS Features** (Tasks 8-10): Header nav control, Footer config, Privacy/Contact pages with WYSIWYG editor
-3. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
+## Next Steps (Task 8+)
+1. **Header Navigation CMS** (Task 8 - IN PROGRESS): Admin can add/edit/delete/reorder nav links, Navbar reads from DB
+2. **Footer CMS** (Task 9): Social links + copyright text editable from admin
+3. **Static Pages** (Task 10): Privacy Policy + Contact Us with WYSIWYG editor
+4. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
 
 ## Running the Project
 ```bash
@@ -152,11 +166,11 @@ outfred/
 - **owner**: All admin actions + assign owner role + access sensitive configs
 
 ## Known Issues
-- Frontend-backend integration pending
-- Loading/error states need implementation
-- Image search requires CLIP embedding setup
+- BrandBadge component error on Home page (undefined brandName.charAt) - needs null safety fix
+- Image search requires CLIP embedding setup (or use Gemini vision model)
 - Spell correction dictionary needs expansion
 - Integration tests for RBAC paths needed
+- Consider automated coverage for AI endpoint validation (with/without Gemini config)
 
 ## Performance Notes
 - Metrics tracked per route in `metrics` table
