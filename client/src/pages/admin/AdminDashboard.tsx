@@ -246,8 +246,9 @@ export default function AdminDashboard() {
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/admin/brands/${id}`, {});
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/brands", id] });
       toast({ title: t("success"), description: "Brand deleted successfully" });
       setDeleteBrandConfirm({ open: false });
     },
@@ -1514,8 +1515,9 @@ function BrandDialog({
       if (!res.ok) throw new Error("Failed to update brand");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/brands", variables.id] });
       toast({ title: t("success"), description: "Brand updated successfully" });
       onClose();
     },
