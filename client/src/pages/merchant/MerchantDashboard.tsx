@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -107,24 +107,26 @@ export default function MerchantDashboard() {
   const { data: merchantProfile } = useQuery<{ id: string; name: string; city: string; contact: string }>({
     queryKey: ["/api/merchants/me"],
     enabled: activeView === "settings",
-    onSuccess: (data) => {
-      setStoreName(data.name || "");
-      setStoreCity(data.city || "");
-      setStoreContact(data.contact || "");
-    },
   });
+
+  // Update form when profile loads (useEffect to avoid setState during render)
+  useEffect(() => {
+    if (merchantProfile && activeView === "settings") {
+      setStoreName(merchantProfile.name || "");
+      setStoreCity(merchantProfile.city || "");
+      setStoreContact(merchantProfile.contact || "");
+    }
+  }, [merchantProfile, activeView]);
 
   // Delete product mutation
   const deleteMutation = useMutation({
     mutationFn: async (productId: string) => {
-      await apiRequest(`/api/products/${productId}`, {
-        method: "DELETE",
-      });
+      return await apiRequest(`/api/products/${productId}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
-      toast({ title: t("productDeleted") || "Product deleted successfully" });
+      toast({ title: "Product deleted successfully" });
     },
     onError: () => {
       toast({ 
@@ -138,11 +140,7 @@ export default function MerchantDashboard() {
   // Update merchant profile mutation
   const updateMerchantMutation = useMutation({
     mutationFn: async (data: { name: string; city: string; contact: string }) => {
-      await apiRequest("/api/merchants/me", {
-        method: "PATCH",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("/api/merchants/me", "PATCH", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchants/me"] });
@@ -158,10 +156,13 @@ export default function MerchantDashboard() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      return await apiRequest("/api/merchant/import/csv", {
+      const response = await fetch("/api/merchant/import/csv", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
+      if (!response.ok) throw new Error("Import failed");
+      return response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
@@ -180,11 +181,7 @@ export default function MerchantDashboard() {
   // Scrape product mutation
   const scrapeMutation = useMutation({
     mutationFn: async (url: string) => {
-      return await apiRequest("/api/merchant/scrape-product", {
-        method: "POST",
-        body: JSON.stringify({ url }),
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("/api/merchant/scrape-product", "POST", { url });
     },
     onSuccess: (data: any) => {
       setScrapedData(data);
@@ -202,16 +199,12 @@ export default function MerchantDashboard() {
   // Create product mutation
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/products", {
-        method: "POST",
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description,
-          priceCents: Math.round(data.price * 100),
-          images: data.images.filter((img: string) => img.trim()),
-          published: true,
-        }),
-        headers: { "Content-Type": "application/json" },
+      return await apiRequest("/api/products", "POST", {
+        title: data.title,
+        description: data.description,
+        priceCents: Math.round(data.price * 100),
+        images: data.images.filter((img: string) => img.trim()),
+        published: true,
       });
     },
     onSuccess: () => {
@@ -231,15 +224,11 @@ export default function MerchantDashboard() {
   // Update product mutation
   const updateProductMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      return await apiRequest(`/api/products/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description,
-          priceCents: Math.round(data.price * 100),
-          images: data.images.filter((img: string) => img.trim()),
-        }),
-        headers: { "Content-Type": "application/json" },
+      return await apiRequest(`/api/products/${id}`, "PATCH", {
+        title: data.title,
+        description: data.description,
+        priceCents: Math.round(data.price * 100),
+        images: data.images.filter((img: string) => img.trim()),
       });
     },
     onSuccess: () => {
@@ -363,11 +352,19 @@ export default function MerchantDashboard() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">{t("products")}</h2>
               <div className="flex gap-2">
-                <GlowButton variant="glass" data-testid="button-reindex">
-                  <RefreshCw className="w-4 h-4 me-2" />
-                  {t("reindexProducts")}
+                <GlowButton 
+                  variant="glass" 
+                  onClick={() => setScraperOpen(true)}
+                  data-testid="button-scrape-product"
+                >
+                  <Globe className="w-4 h-4 me-2" />
+                  Scrape from URL
                 </GlowButton>
-                <GlowButton variant="primary" data-testid="button-add-product">
+                <GlowButton 
+                  variant="primary" 
+                  onClick={handleOpenCreate}
+                  data-testid="button-add-product"
+                >
                   <Plus className="w-4 h-4 me-2" />
                   {t("addProduct")}
                 </GlowButton>
@@ -415,15 +412,20 @@ export default function MerchantDashboard() {
                         <TableCell>{(product.priceCents / 100).toFixed(0)} EGP</TableCell>
                         <TableCell>
                           <Badge variant={product.published ? "default" : "secondary"}>
-                            {product.published ? t("published") : t("draft")}
+                            {product.published ? "Published" : "Draft"}
                           </Badge>
                         </TableCell>
                         <TableCell>{product.views}</TableCell>
                         <TableCell>{product.clicks}</TableCell>
                         <TableCell className="text-end">
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="ghost" data-testid={`button-edit-${product.id}`}>
-                              {t("edit")}
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => handleOpenEdit(product)}
+                              data-testid={`button-edit-${product.id}`}
+                            >
+                              <Edit className="w-4 h-4" />
                             </Button>
                             <Button 
                               size="sm" 
@@ -436,7 +438,7 @@ export default function MerchantDashboard() {
                               }}
                               disabled={deleteMutation.isPending}
                             >
-                              {t("delete")}
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -603,6 +605,180 @@ export default function MerchantDashboard() {
             </GlassCard>
           </div>
         )}
+
+        {/* Product Scraper Dialog */}
+        <Dialog open={scraperOpen} onOpenChange={setScraperOpen}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Scrape Product from URL</DialogTitle>
+              <DialogDescription>
+                Enter a product URL to automatically extract product details
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Product URL</Label>
+                <Input
+                  placeholder="https://example.com/product/..."
+                  value={scrapeUrl}
+                  onChange={(e) => setScrapeUrl(e.target.value)}
+                  data-testid="input-scrape-url"
+                />
+              </div>
+
+              <Button
+                onClick={handleScrape}
+                disabled={scrapeMutation.isPending}
+                className="w-full"
+                data-testid="button-start-scrape"
+              >
+                {scrapeMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin me-2" />
+                    Scraping...
+                  </>
+                ) : (
+                  <>
+                    <Globe className="w-4 h-4 me-2" />
+                    Scrape Product
+                  </>
+                )}
+              </Button>
+
+              {scrapedData && (
+                <div className="border border-white/20 rounded-xl p-4 space-y-3">
+                  <h3 className="font-semibold">Scraped Data</h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-medium">Title:</span> {scrapedData.title}
+                    </div>
+                    <div>
+                      <span className="font-medium">Price:</span> {scrapedData.price} EGP
+                    </div>
+                    <div>
+                      <span className="font-medium">Images:</span> {scrapedData.images.length} found
+                    </div>
+                    {scrapedData.description && (
+                      <div>
+                        <span className="font-medium">Description:</span>{" "}
+                        {scrapedData.description.substring(0, 100)}...
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    onClick={handleSaveScraped}
+                    className="w-full"
+                    data-testid="button-use-scraped-data"
+                  >
+                    <Save className="w-4 h-4 me-2" />
+                    Use This Data
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Product Create/Edit Dialog */}
+        <Dialog open={productDialog.open} onOpenChange={(open) => setProductDialog({ open })}>
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {productDialog.product ? "Edit Product" : "Create Product"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Title *</Label>
+                <Input
+                  placeholder="Product title"
+                  value={productForm.title}
+                  onChange={(e) => setProductForm({ ...productForm, title: e.target.value })}
+                  data-testid="input-product-title"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  placeholder="Product description"
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                  rows={4}
+                  data-testid="input-product-description"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Price (EGP) *</Label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })}
+                  data-testid="input-product-price"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Images (URLs)</Label>
+                {productForm.images.map((img, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <Input
+                      placeholder="https://example.com/image.jpg"
+                      value={img}
+                      onChange={(e) => {
+                        const newImages = [...productForm.images];
+                        newImages[idx] = e.target.value;
+                        setProductForm({ ...productForm, images: newImages });
+                      }}
+                      data-testid={`input-product-image-${idx}`}
+                    />
+                    {idx === productForm.images.length - 1 && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setProductForm({ ...productForm, images: [...productForm.images, ""] })}
+                        data-testid="button-add-image"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setProductDialog({ open: false })}
+                data-testid="button-cancel-product"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveProduct}
+                disabled={createProductMutation.isPending || updateProductMutation.isPending}
+                data-testid="button-save-product"
+              >
+                {(createProductMutation.isPending || updateProductMutation.isPending) ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin me-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 me-2" />
+                    Save Product
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
