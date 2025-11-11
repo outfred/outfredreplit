@@ -61,22 +61,28 @@
   - `outfits`: Added userHeight, userWeight, aiPrompt, shoeRecommendation (JSON)
   - `systemConfig`: Added Gemini API key support + logoUrl field
 - ✅ **Schema Changes Pushed**: `npm run db:push` successful - all tables created in database
+- ✅ **Admin Merchant CRUD**: Complete create/edit/delete with owner assignment, status approval, bilingual fields (Task 3)
+- ✅ **Admin Product Management**: Merchant filtering, publish/draft toggle, edit/delete flows, CSV bulk import (Task 4)
+- ✅ **Admin Brand Management** (Task 5):
+  - Bilingual schema: nameEn, nameAr, websiteUrl (SQL migration from name→nameEn)
+  - Logo upload: Multer diskStorage (server/uploads), FormData, express.static serving
+  - Full CRUD: Create/update/delete with logo persistence
+  - Hot reload safety: registerRoutes guard prevents duplicate middleware/routes
+  - Image search: uploadMemory instance for buffer support
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
-- **Database**: Schema updated with CMS tables ✅  
+- **Database**: Schema updated with CMS tables, brands migrated to bilingual ✅  
 - **Frontend**: Home, Product, Admin pages integrated with real data ✅
-- **Backend**: All API routes implemented ✅
+- **Backend**: All API routes implemented, registerRoutes hot-reload safe ✅
 - **Authentication**: Complete with protected routes and RBAC ✅
-- **Integration Progress**: 6/11 tasks (search bug fixed, schema updated)
+- **Integration Progress**: 5/11 tasks completed (Tasks 1-5)
 
-## Next Steps (Task 3+)
-1. **Admin Dashboard CRUD**: Complete merchant/product/brand management (add/edit/delete with forms)
-2. **Admin CSV Import**: Bulk product upload for merchants
-3. **Gemini AI Migration**: Replace OpenAI with Gemini across all AI features
-4. **Complete Outfit Builder**: Height/weight input, AI prompt, outfit generation (top+bottom+global shoes)
-5. **CMS Features**: Header nav control, Footer config, Privacy/Contact pages with WYSIWYG editor
-6. **Logo Upload**: Replace "Outfred" text with admin-uploadable logo
+## Next Steps (Task 6+)
+1. **Gemini AI Migration** (Task 6 - IN PROGRESS): Replace OpenAI with Gemini across all AI features (embeddings, outfit suggestions, search)
+2. **Complete Outfit Builder** (Task 7): Height/weight input, AI prompt, outfit generation (top+bottom from DB + shoes from global brands)
+3. **CMS Features** (Tasks 8-10): Header nav control, Footer config, Privacy/Contact pages with WYSIWYG editor
+4. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
 
 ## Running the Project
 ```bash

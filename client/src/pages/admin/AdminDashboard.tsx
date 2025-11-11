@@ -654,7 +654,7 @@ export default function AdminDashboard() {
                   <SelectContent className="bg-popover/95 backdrop-blur-xl border-popover-border">
                     <SelectItem value="local">Local</SelectItem>
                     <SelectItem value="huggingface">Hugging Face</SelectItem>
-                    <SelectItem value="openai">OpenAI</SelectItem>
+                    <SelectItem value="gemini">Gemini</SelectItem>
                   </SelectContent>
                 </Select>
               </GlassCard>
@@ -851,8 +851,8 @@ export default function AdminDashboard() {
                     <Input id="hf-key" type="password" placeholder="hf_••••••••" data-testid="input-hf-key" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="openai-key">OpenAI API Key</Label>
-                    <Input id="openai-key" type="password" placeholder="sk-••••••••" data-testid="input-openai-key" />
+                    <Label htmlFor="gemini-key">Gemini API Key</Label>
+                    <Input id="gemini-key" type="password" placeholder="AI••••••••" data-testid="input-gemini-key" />
                   </div>
                 </div>
               </GlassCard>

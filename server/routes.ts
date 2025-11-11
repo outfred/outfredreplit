@@ -879,7 +879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/config", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
     try {
       const configSchema = z.object({
-        embeddingsProvider: z.enum(["local", "huggingface", "openai"]).optional(),
+        embeddingsProvider: z.enum(["local", "huggingface", "gemini"]).optional(),
         imageGenerationProvider: z.enum(["off", "stable-diffusion", "dalle"]).optional(),
         enableSpellCorrection: z.boolean().optional(),
         enableOutfitAI: z.boolean().optional(),
@@ -888,7 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         synonyms: z.record(z.string(), z.string()).optional(),
         providerKeys: z.object({
           huggingface: z.string().optional(),
-          openai: z.string().optional(),
+          gemini: z.string().optional(),
         }).optional(),
         smtpConfig: z.object({
           host: z.string().optional(),
