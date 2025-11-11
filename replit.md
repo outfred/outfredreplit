@@ -53,7 +53,7 @@
 - ✅ **Search Bug Fixed**: Homepage now filters to `published=true` products only (matching search behavior)
 - ✅ **Admin Dashboard**: Connected to real API (users, merchants, brands, metrics with mutations)
 - ✅ **CMS Database Schema**: Added 4 new tables:
-  - `navLinks` - Header navigation control (label, path, order, isEnabled)
+  - `navLinks` - Header navigation control (labelEn, labelAr, path, order, isEnabled)
   - `footerConfig` - Footer config singleton (copyrightText, socialLinks JSON)
   - `staticPages` - Static pages CMS (slug, title, content, metaDescription, isPublished)
   - `globalShoeBrands` - Global shoe brands catalog (name, popularModels, websiteUrl) - 10 brands seeded
@@ -88,6 +88,13 @@
   - Toast Notifications: Success/error messages
   - Authentication: Bearer token in fetch headers
   - Fallback: Simple rule-based suggestions if Gemini not configured
+- ✅ **Navigation CMS** (Task 8):
+  - Database Schema: Migrated `label` → `labelEn` + `labelAr` (bilingual nav links)
+  - Backend: Storage methods + API routes (public GET + admin CRUD with validation)
+  - Seeded Data: 4 default nav links (Home, Search, Outfit Builder, Brands)
+  - Navbar Component: Fetches from `/api/nav-links` with bilingual rendering (language === "ar" ? labelAr : labelEn)
+  - Admin Dashboard: Navigation tab added with placeholder UI ("Coming soon")
+  - Architect Review: PASS - Navbar reads from DB, bilingual support works, no TypeScript errors
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
@@ -97,10 +104,11 @@
 - **Authentication**: Complete with protected routes and RBAC ✅
 - **AI**: Migrated to Gemini API (text/image embeddings, outfit suggestions) ✅
 - **Outfit Builder**: Complete with AI form, Gemini integration, product display ✅
-- **Integration Progress**: 7/11 tasks completed (Tasks 1-7)
+- **Navigation CMS**: Navbar reads from DB with bilingual support (En/Ar), Admin tab exists ✅
+- **Integration Progress**: 8/11 tasks completed (Tasks 1-8)
 
-## Next Steps (Task 8+)
-1. **Header Navigation CMS** (Task 8 - IN PROGRESS): Admin can add/edit/delete/reorder nav links, Navbar reads from DB
+## Next Steps (Task 9+)
+1. **Header Navigation CRUD UI** (Enhancement): Build full admin CRUD interface for navigation links (create/edit/delete/reorder) - currently placeholder
 2. **Footer CMS** (Task 9): Social links + copyright text editable from admin
 3. **Static Pages** (Task 10): Privacy Policy + Contact Us with WYSIWYG editor
 4. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
