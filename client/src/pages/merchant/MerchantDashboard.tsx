@@ -117,7 +117,7 @@ export default function MerchantDashboard() {
   // Delete product mutation
   const deleteMutation = useMutation({
     mutationFn: async (productId: string) => {
-      return await apiRequest(`/api/products/${productId}`, "DELETE");
+      return await apiRequest("DELETE", `/api/products/${productId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
@@ -136,7 +136,7 @@ export default function MerchantDashboard() {
   // Update merchant profile mutation
   const updateMerchantMutation = useMutation({
     mutationFn: async (data: { name: string; city: string; contact: string }) => {
-      return await apiRequest("/api/merchants/me", "PATCH", data);
+      return await apiRequest("PATCH", "/api/merchants/me", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchants/me"] });
@@ -177,7 +177,7 @@ export default function MerchantDashboard() {
   // Scrape product mutation
   const scrapeMutation = useMutation({
     mutationFn: async (url: string) => {
-      return await apiRequest("/api/merchant/scrape-product", "POST", { url });
+      return await apiRequest("POST", "/api/merchant/scrape-product", { url });
     },
     onSuccess: (data: any) => {
       setScrapedData(data);
@@ -195,7 +195,7 @@ export default function MerchantDashboard() {
   // Create product mutation
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/products", "POST", {
+      return await apiRequest("POST", "/api/products", {
         title: data.title,
         description: data.description,
         priceCents: Math.round(data.price * 100),
@@ -220,7 +220,7 @@ export default function MerchantDashboard() {
   // Update product mutation
   const updateProductMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      return await apiRequest(`/api/products/${id}`, "PATCH", {
+      return await apiRequest("PATCH", `/api/products/${id}`, {
         title: data.title,
         description: data.description,
         priceCents: Math.round(data.price * 100),
@@ -283,7 +283,7 @@ export default function MerchantDashboard() {
     try {
       for (const product of productsToImport) {
         try {
-          await apiRequest("/api/products", "POST", {
+          await apiRequest("POST", "/api/products", {
             title: product.title,
             description: product.description,
             priceCents: Math.round(product.price * 100),

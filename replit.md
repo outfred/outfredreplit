@@ -25,7 +25,14 @@ The application is built with a schema-first, type-safe architecture using React
 - **Outfit Builder**: AI-suggested outfit combinations based on user input (height, weight, prompt), allowing users to save and share. Integrates with Gemini AI for suggestions.
 - **Multi-role Dashboards**:
     - **User Profile**: Personal settings and saved items.
-    - **Merchant Dashboard**: Product CRUD (including CSV import), analytics (products, views, clicks, conversion rate, revenue), and store settings. SMTP test email functionality for verifying email configuration.
+    - **Merchant Dashboard**: 
+      - **Product Management**: Full CRUD with individual create/edit dialogs (title, description, price, images)
+      - **Product Import**: Three methods:
+        1. **CSV Import**: Bulk upload via file (supports title, description, price, images, colors, sizes, tags, brand)
+        2. **URL Scraper (Single)**: Extract product data from individual product pages
+        3. **Shopify Collection Import**: Fetch multiple products from Shopify collection pages (e.g., `/collections/all`) via JSON API, with checkbox selection and bulk import (up to 250 products, limited to 50 for safety). Features URL normalization, progress feedback, and success/failure tracking.
+      - **Analytics**: Track products, views, clicks, conversion rate, and revenue
+      - **Store Settings**: Configure store name, city, and contact information
     - **Admin Dashboard**: Comprehensive system configuration, management of users, merchants, brands, navigation links, footer content, and static pages.
 - **Content Management Systems (CMS)**:
     - **Navigation CMS**: Full CRUD interface for header navigation links with bilingual support (labelEn/labelAr), order management, and up/down reordering. Implemented in separate `NavigationLinksView.tsx` component.
