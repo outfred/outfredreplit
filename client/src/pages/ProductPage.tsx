@@ -1,26 +1,30 @@
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowButton } from "@/components/ui/glow-button";
 import { ProductTile } from "@/components/ui/product-tile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, Share2, Store, AlertCircle } from "lucide-react";
+import { Heart, Share2, Store, AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Product, ProductSummary, Brand } from "@shared/schema";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function ProductPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const params = useParams();
   const [, setLocation] = useLocation();
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
 
   // Fetch product data
   const { data: product, isLoading: productLoading, error: productError } = useQuery<Product>({
@@ -41,6 +45,112 @@ export default function ProductPage() {
 
   // Filter out current product and limit to 3
   const relatedProducts = (relatedProductsRaw ?? []).filter((p) => p.id !== params.id).slice(0, 3);
+
+  // Check favorite status (only when authenticated)
+  const { data: favoriteStatus } = useQuery<{ isFavorite: boolean }>({
+    queryKey: ["/api/favorites", params.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/favorites/${params.id}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to check favorite");
+      return res.json();
+    },
+    enabled: !!user && !!params.id,
+  });
+
+  const isFavorite = favoriteStatus?.isFavorite || false;
+
+  // Add to favorites mutation
+  const addFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/favorites", { productId: params.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", params.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: language === "ar" ? "تمت الإضافة إلى المفضلة" : "Added to favorites",
+      });
+    },
+    onError: () => {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar" ? "فشلت إضافة المنتج إلى المفضلة" : "Failed to add to favorites",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove from favorites mutation
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/favorites/${params.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", params.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: language === "ar" ? "تمت الإزالة من المفضلة" : "Removed from favorites",
+      });
+    },
+    onError: () => {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar" ? "فشلت إزالة المنتج من المفضلة" : "Failed to remove from favorites",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle favorite toggle
+  const handleFavoriteToggle = () => {
+    if (!user) {
+      toast({
+        title: language === "ar" ? "يرجى تسجيل الدخول" : "Please login",
+        description: language === "ar" ? "يجب تسجيل الدخول لحفظ المفضلة" : "You need to login to save favorites",
+        variant: "destructive",
+      });
+      setLocation("/login");
+      return;
+    }
+
+    if (isFavorite) {
+      removeFavoriteMutation.mutate();
+    } else {
+      addFavoriteMutation.mutate();
+    }
+  };
+
+  // Handle share
+  const handleShare = async () => {
+    const shareData = {
+      title: product?.title || "Product",
+      text: `${product?.title}${brand?.nameEn ? ` by ${brand.nameEn}` : ""} - ${((product?.priceCents || 0) / 100).toFixed(2)} ${product?.currency || "EGP"}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast({
+          title: language === "ar" ? "تمت المشاركة" : "Shared successfully",
+        });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: language === "ar" ? "تم نسخ الرابط" : "Link copied",
+          description: language === "ar" ? "تم نسخ رابط المنتج إلى الحافظة" : "Product link copied to clipboard",
+        });
+      } else {
+        throw new Error("Share not supported");
+      }
+    } catch (error) {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: language === "ar" ? "فشلت عملية المشاركة" : "Failed to share",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (productLoading) {
     return (
@@ -201,13 +311,24 @@ export default function ProductPage() {
                 variant="primary"
                 size="lg"
                 className="flex-1"
-                onClick={() => setIsFavorite(!isFavorite)}
+                onClick={handleFavoriteToggle}
+                disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
                 data-testid="button-add-favorite"
               >
-                <Heart className={cn("w-5 h-5 me-2", isFavorite && "fill-current")} />
+                {(addFavoriteMutation.isPending || removeFavoriteMutation.isPending) ? (
+                  <Loader2 className="w-5 h-5 me-2 animate-spin" />
+                ) : (
+                  <Heart className={cn("w-5 h-5 me-2", isFavorite && "fill-current")} />
+                )}
                 {isFavorite ? t("removeFromFavorites") : t("addToFavorites")}
               </GlowButton>
-              <Button size="icon" variant="outline" className="rounded-2xl h-12 w-12" data-testid="button-share">
+              <Button 
+                size="icon" 
+                variant="outline" 
+                className="rounded-2xl h-12 w-12" 
+                onClick={handleShare}
+                data-testid="button-share"
+              >
                 <Share2 className="w-5 h-5" />
               </Button>
             </div>

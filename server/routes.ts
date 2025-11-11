@@ -730,6 +730,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === Favorites Endpoints ===
+
+  // Get user favorites
+  app.get("/api/favorites", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const favorites = await storage.listFavoritesByUser(req.user!.userId);
+      res.json(favorites);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch favorites" });
+    }
+  });
+
+  // Check if product is favorited
+  app.get("/api/favorites/:productId", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const favorite = await storage.getFavorite(req.user!.userId, req.params.productId);
+      res.json({ isFavorite: !!favorite });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to check favorite" });
+    }
+  });
+
+  // Add to favorites
+  app.post("/api/favorites", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { productId } = req.body;
+      if (!productId) {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+
+      // Check if already favorited
+      const existing = await storage.getFavorite(req.user!.userId, productId);
+      if (existing) {
+        return res.json(existing);
+      }
+
+      const favorite = await storage.createFavorite({
+        userId: req.user!.userId,
+        productId,
+      });
+      res.status(201).json(favorite);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to add favorite" });
+    }
+  });
+
+  // Remove from favorites
+  app.delete("/api/favorites/:productId", authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteFavorite(req.user!.userId, req.params.productId);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to remove favorite" });
+    }
+  });
+
   // Import CSV
   app.post("/api/merchant/import/csv", authMiddleware, requireRole("merchant", "admin", "owner"), upload.single("file"), async (req: AuthRequest, res) => {
     try {
