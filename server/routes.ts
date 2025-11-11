@@ -632,6 +632,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update own merchant profile
+  app.patch("/api/merchants/me", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const merchant = await storage.getMerchantByOwner(req.user!.userId);
+      if (!merchant) {
+        return res.status(404).json({ error: "Merchant profile not found" });
+      }
+
+      // Merchants can update: name, city, contact, email, phone, socials
+      // But NOT: status, ownerUserId, id
+      const updateSchema = insertMerchantSchema
+        .partial()
+        .omit({ id: true, ownerUserId: true, status: true });
+      
+      const validatedData = updateSchema.parse(req.body);
+      const updated = await storage.updateMerchant(merchant.id, validatedData);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to update merchant profile" });
+    }
+  });
+
   // Get merchant products
   app.get("/api/merchant/products", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {
