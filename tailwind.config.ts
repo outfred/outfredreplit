@@ -9,6 +9,8 @@ export default {
         lg: ".5625rem", /* 9px */
         md: ".375rem", /* 6px */
         sm: ".1875rem", /* 3px */
+        "2xl": "1rem", /* 16px - glassmorphism */
+        "3xl": "1.5rem", /* 24px - glassmorphism */
       },
       colors: {
         // Flat / base colors (regular buttons)
@@ -84,8 +86,12 @@ export default {
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
+        arabic: ["var(--font-arabic)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+      },
+      backdropBlur: {
+        xs: "2px",
       },
       keyframes: {
         "accordion-down": {
