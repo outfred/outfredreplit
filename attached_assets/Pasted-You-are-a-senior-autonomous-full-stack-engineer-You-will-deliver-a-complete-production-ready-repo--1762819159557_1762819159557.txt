@@ -1,0 +1,180 @@
+You are a senior autonomous full-stack engineer. You will deliver a complete, production-ready repo for “Outfred” — Egypt’s first AI-powered local fashion hub.
+
+🔧 Tech guardrails (do NOT violate)
+Frontend: React + Vite + TypeScript + Tailwind + Radix UI + shadcn/ui. No Next.js, no CRA.
+Backend: Node.js 20 + Hono (ESM) or Express (choose Hono by default) + TypeScript.
+DB: PostgreSQL via Prisma (preferred) OR Drizzle. SINGLE source of truth = Postgres.
+Auth: JWT (access+refresh), RBAC (user, merchant, admin, owner).
+Monorepo structure with pnpm workspaces (fallback npm if pnpm unavailable).
+Styling: iOS/visionOS glassmorphism (rounded-2xl/3xl, hairline borders, backdrop-blur-xl).
+Bilingual: Arabic (RTL) + English (LTR). Runtime toggle (not build-time).
+Use Vite always (don’t replace with other bundlers).
+🗂 Repo layout
+outfred/ apps/ web/ # React + Vite frontend (B2C + dashboards) api/ # Hono API server (ESM) packages/ ui/ # shared UI components (glass cards, buttons, inputs) lib/ # shared utils (i18n, fetch client, zod schemas) metrics/ # lightweight metrics collector infra/ prisma/ # schema.prisma + migrations + seed scripts/ # dev scripts; start-all, seed, cron mocks README.md README_AI.md pnpm-workspace.yaml .env.example (minimal, see “Configuration via Admin” section) docker-compose.yml (optional single-node dev)
+
+🎨 Brand system (apply across UI)
+Colors: primary #411129, accent #b47f8e, neutral #cfd0d2; surface with 8–12% opacity layers.
+Components: GlassCard, GlowButton, NavBar, SearchBar, ProductTile, BrandBadge, DataTable, EmptyState.
+Motion: 150–250ms ease; subtle y-translate + opacity on enter.
+RTL/LTR: dir attribute binding; typography Cairo/Inter; shadcn theme tokens.
+🧩 App surfaces (must implement)
+B2C (public):
+Home: hero + universal search (text/image), trending brands, categories.
+Search Results: blended (semantic + BM25 + filters: size, color, price, city, brand).
+Product Page: images, variants, sizes, merchant info, related items (AI).
+Outfit Builder: compose items to a look; save outfit; AI suggestions.
+User Area: profile, favorites, outfits, orders (mocked), settings (lang/theme).
+Merchant Dashboard:
+Auth for merchant.
+Product CRUD (name, price, colors, sizes, images, tags, brand, city).
+Imports: Shopify, WooCommerce, CSV (implement CSV fully; add UI for tokens for the rest).
+Analytics: views, clicks, conversions (mock + real events pipeline).
+Store settings: logo/banner, policies, contact, fulfillment city.
+Indexing control: “Reindex products” and “Schedule indexing” toggle.
+Admin Dashboard:
+Users CRUD + role assignment (user/merchant/admin/owner).
+Merchants CRUD + approve/ban.
+AI Controls:
+Embeddings provider: Local / HF / OpenAI (dropdown).
+Image generation: Off / HF (Stable Diffusion) / Other.
+Similarity index params (dim, metric, topK, re-rank toggle).
+Spell correction: on/off + dictionary management (ar/en + synonyms).
+System:
+Metrics (endpoint latency, 95p/99p), index sizes, cron status.
+SMTP config (Nodemailer): host, port, user, pass (stored encrypted).
+Feature flags: outfit_ai, image_search, multilingual, analytics_stream.
+Page Builder (basic): hero sections + banners + links; export JSON.
+🧠 AI/Search requirements
+Embeddings: text + image (CLIP-like). Abstract provider behind interface:
+ProviderHf, ProviderOpenAI, ProviderLocal (stub ok).
+Search pipeline:
+Hybrid: BM25 (pg_trgm/tsvector) + semantic vectors (pgvector).
+Re-rank (optional) with cosine sim.
+Spell correction: ar/en; for Arabic include synonym map (e.g., “هودي=hoodie”).
+Image Search:
+Upload → compute image embedding → nearest neighbors over product gallery vectors.
+Outfit AI:
+Simple rule-based + embedding-similarity first version; expose endpoint.
+Image Generation API:
+POST /api/generate-image (Auth required) → proxy to provider if enabled.
+Add simple key guard + rate limit (per user/day).
+Indexing:
+Background cron to rebuild embeddings when product changes > threshold.
+Batch size, concurrency, and backoff configurable.
+Metrics:
+packages/metrics: minimal helper to time endpoints + export JSON feed.
+Log: request id, route, ms, status, userId/role, UA.
+🔐 Auth & RBAC
+JWT pair: access 15m, refresh 7d, HTTP-only cookies when on same domain else headers.
+Roles: user, merchant, admin, owner.
+Guards:
+/api/admin/** → admin|owner only.
+/api/merchant/** → merchant|owner or admin masquerade.
+/api/generate-image → any authenticated user + feature flag.
+Password hashing: bcrypt; email verification optional; password reset flow.
+🗄 Data model (Prisma)
+User(id, email unique, name, role, passwordHash, createdAt) Merchant(id, ownerUserId FK, name, city, socials JSON, status enum[active,banned,pending]) Brand(id, name unique, city, logoUrl, coverUrl) Product(id, merchantId FK, brandId FK, title, description, priceCents, currency, colors string[], sizes string[], fit enum, gender enum, tags string[], images string[], vectors JSONB, published boolean, createdAt, updatedAt) Outfit(id, userId FK, productIds string[], title, notes, coverImage) SearchEvent(id, userId?, q, type enum[text,image], filters JSON, resultsCount, tookMs, createdAt) Metric(id, route, ms, status, userRole, createdAt)
+
+pgvector: product(vectors.textEmbedding), product(vectors.imageEmbedding[] as optional).
+tsvector columns for BM25 text: title + description + tags.
+🛣 API surface (Hono)
+Auth: POST /api/auth/register, /login, /refresh, /logout
+Users (admin): GET/POST/PATCH/DELETE /api/admin/users
+Merchants:
+(admin) GET/POST/PATCH/DELETE /api/admin/merchants
+(merchant) GET/POST/PATCH/DELETE /api/merchant/products
+(merchant) POST /api/merchant/import/csv (multipart) → batch create/update
+Brands: CRUD (admin)
+Products (public): GET /api/products (filters), GET /api/products/:id
+Search:
+POST /api/search/text {q, filters} → blended results
+POST /api/search/image {file, filters} → image similarity
+POST /api/search/spell {q} → suggestions (ar/en)
+Outfit:
+POST /api/outfit/ai {seedProductId | styleTags[]} → suggested productIds
+CRUD /api/user/outfits
+AI Image:
+POST /api/generate-image {prompt, negativePrompt?, steps?} (Auth + rate-limit)
+System:
+GET /api/admin/metrics → last N metrics
+POST /api/admin/index/rebuild → trigger reindex
+GET /api/admin/config → global config snapshot
+PATCH /api/admin/config → update flags/providers/SMTP
+⚙️ Configuration via Admin (not .env)
+Persist configuration in table “SystemConfig” (single row JSON).
+.env.example keeps ONLY DB url and JWT secrets; all providers keys (HF, OpenAI, SMTP) set from Admin UI → stored encrypted at rest and loaded into memory on boot.
+Provide bootstrap CLI to set owner user and an initial admin password.
+🖥 Frontend requirements
+Single Vite app with “areas”:
+/ (B2C)
+/merchant/* (Merchant Dashboard)
+/admin/* (Admin Dashboard)
+i18n: simple dictionary (ar/en) + RTL/LTR switch + persisted user pref.
+Theming: dark/light toggle with localStorage + system match.
+Forms: react-hook-form + zod resolver; toast via sonner.
+File uploads: image validation + compression (client-side) before upload.
+Reusable glass components from packages/ui with shadcn primitives.
+🧪 Testing & QA
+API tests: Vitest + supertest. Cover auth, search, products CRUD, CSV import, RBAC gates, generate-image auth & rate limit.
+Unit tests for spell correction & synonym map (ar/en).
+E2E happy path script: register → login → create merchant → import CSV → index → search text → search image → build outfit → admin metrics.
+Lint/format: ESLint + Prettier strict.
+CI: run typecheck, lint, test on push. Block merge on failure.
+⏱ Performance & DX
+Endpoint budgets: p95 < 250ms for GET products/search with warm cache; log breaches.
+Image processing off main thread (worker/queue minimal or best effort).
+Dev scripts:
+pnpm dev:api
+pnpm dev:web
+pnpm dev (concurrently)
+pnpm seed (create demo brands/products in EN/AR)
+pnpm index:all (rebuild vectors)
+pnpm test
+🔁 Cron & indexing
+Run every 15m: batch scan for products without vectors or updatedAt > lastIndexedAt.
+Expose /api/admin/index/health with last run, processed, failures.
+🔒 Security
+Helmet-like headers
+CORS configurable (Admin UI)
+Rate limits per route (login, generate-image, search/image)
+Input validation with zod for every POST/PATCH
+📄 Deliverables (must be present)
+Full monorepo with code.
+README.md — quickstart (≤200 lines).
+README_AI.md — deep dive: architecture, pipelines, how to switch providers, how RTL/LTR works, how to extend.
+Migrations + seed data (brands, 50 demo products with images/colors/fits).
+Postman collection or Thunder client file covering all APIs.
+Example CSV for import + mapping doc.
+Tests runnable with a single command.
+🚀 Quickstart (write real commands in README)
+Install: pnpm i (fallback npm i)
+DB: npx prisma migrate dev && pnpm seed
+Start: pnpm dev (spawns api + web)
+Admin bootstrap:
+pnpm cli owner:create --email owner@outfred.com --password Owner#123
+Login in Admin → set providers (HF key, SMTP, flags)
+Run “Reindex All”
+✅ Acceptance Criteria (do not mark done unless all pass)
+Create merchant → import CSV → products live → index builds → text/image search returns results in ≤ 1.2s cold start.
+Spell “hodie” suggests “hoodie” (en), “هودي=hoodie” works (ar).
+/api/generate-image requires auth and enforces daily rate limit.
+Admin can switch embeddings provider without redeploy (config live reload).
+Metrics show p95 per endpoint; failing budgets log warning event.
+UI runs RTL Arabic flawlessly (menus, tables, cards), and toggles to English LTR.
+All tests pass in CI; lint/typecheck clean.
+No secrets outside SystemConfig; .env only for DB/JWT.
+🧯 Troubleshooting policy
+If pnpm unavailable, print notice and auto-fallback to npm scripts.
+If pgvector not installed, include migration to enable extension “CREATE EXTENSION IF NOT EXISTS vector;”.
+If image provider disabled, return 503 with actionable message.
+Never hardcode provider keys; read from SystemConfig only.
+✍️ Extra Dev Notes
+Provide GlassCard & GlowButton components matching iOS/visionOS gloss with hairline borders, backdrop blur, gradient sheen.
+Ensure merchant product variants (size/color) are first-class.
+Implement deduplication: avoid duplicate products by (merchantId, title, color, size) via unique index.
+Now, implement the full repo accordingly, generate README files, seed data, tests, and ensure “Quickstart” works end-to-end locally.
+
+When you finish:
+
+Print a short summary of what you built + exact commands to run locally.
+List the admin user you bootstrapped and the default credentials used (safe demo values).
