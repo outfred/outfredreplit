@@ -82,6 +82,9 @@ export default function AdminDashboard() {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [selectedMerchantForImport, setSelectedMerchantForImport] = useState<string>("");
 
+  // SMTP Test State
+  const [testEmail, setTestEmail] = useState("");
+
   // Product Filter & Dialog State
   const [productMerchantFilter, setProductMerchantFilter] = useState<string>("");
   const [deleteProductConfirm, setDeleteProductConfirm] = useState<{
@@ -249,6 +252,25 @@ export default function AdminDashboard() {
     },
     onError: () => {
       toast({ title: t("error"), description: "Failed to delete brand", variant: "destructive" });
+    },
+  });
+
+  // Test Email Mutation
+  const testEmailMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await apiRequest("POST", "/api/admin/test-email", { testEmail: email });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({ title: "Success", description: data.message || "Test email sent successfully" });
+      setTestEmail("");
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to send test email. Check SMTP configuration.", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -889,6 +911,32 @@ export default function AdminDashboard() {
                   <div className="space-y-2">
                     <Label htmlFor="smtp-pass">Password</Label>
                     <Input id="smtp-pass" type="password" placeholder="••••••••" data-testid="input-smtp-pass" />
+                  </div>
+                  
+                  {/* Test Email Section */}
+                  <div className="border-t border-white/10 pt-4 space-y-3">
+                    <Label className="text-sm font-medium">Test Email Configuration</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="email"
+                        placeholder="Enter test email address"
+                        value={testEmail}
+                        onChange={(e) => setTestEmail(e.target.value)}
+                        data-testid="input-test-email"
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => testEmail && testEmailMutation.mutate(testEmail)}
+                        disabled={!testEmail || testEmailMutation.isPending}
+                        data-testid="button-send-test-email"
+                      >
+                        {testEmailMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Mail className="w-4 h-4 me-2" />}
+                        {testEmailMutation.isPending ? "Sending..." : "Send Test"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Send a test email to verify your SMTP configuration is working correctly
+                    </p>
                   </div>
                 </div>
               </GlassCard>

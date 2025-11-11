@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import express from "express";
 import multer from "multer";
+import nodemailer from "nodemailer";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, generateAccessToken, generateRefreshToken, verifyRefreshToken } from "./lib/auth";
 import { authMiddleware, requireRole, type AuthRequest } from "./middleware/auth";
@@ -1082,6 +1083,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(config);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update config" });
+    }
+  });
+
+  // Test SMTP configuration
+  app.post("/api/admin/test-email", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const { testEmail } = z.object({ testEmail: z.string().email() }).parse(req.body);
+      
+      const config = await storage.getSystemConfig();
+      const smtpConfig = config?.smtpConfig;
+
+      if (!smtpConfig?.host || !smtpConfig?.port || !smtpConfig?.user || !smtpConfig?.pass) {
+        return res.status(400).json({ error: "SMTP configuration incomplete. Please configure SMTP settings first." });
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: smtpConfig.host,
+        port: smtpConfig.port,
+        secure: smtpConfig.port === 465,
+        auth: {
+          user: smtpConfig.user,
+          pass: smtpConfig.pass,
+        },
+      });
+
+      await transporter.sendMail({
+        from: smtpConfig.user,
+        to: testEmail,
+        subject: "Outfred - SMTP Test Email",
+        text: "This is a test email from Outfred. If you received this, your SMTP configuration is working correctly!",
+        html: "<h1>SMTP Test Successful</h1><p>This is a test email from Outfred. If you received this, your SMTP configuration is working correctly!</p>",
+      });
+
+      res.json({ success: true, message: `Test email sent successfully to ${testEmail}` });
+    } catch (error: any) {
+      console.error("SMTP test failed:", error);
+      res.status(500).json({ error: error.message || "Failed to send test email" });
     }
   });
 
