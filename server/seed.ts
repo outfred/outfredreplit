@@ -1,5 +1,6 @@
 import { storage } from "./storage";
 import { hashPassword } from "./lib/auth";
+import { pathToFileURL } from "url";
 
 const products = [
   // Cairo Streetwear Products
@@ -208,9 +209,11 @@ export async function seedDatabase() {
   }
 }
 
-// Run if called directly
-if (require.main === module) {
+// Run if called directly (ESM equivalent of require.main === module)
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   seedDatabase()
     .then(() => process.exit(0))
     .catch(() => process.exit(1));
 }
+
+export { seedDatabase };
