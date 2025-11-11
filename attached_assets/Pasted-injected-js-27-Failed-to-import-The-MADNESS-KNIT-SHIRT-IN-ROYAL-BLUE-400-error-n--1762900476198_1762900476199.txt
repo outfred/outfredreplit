@@ -1,0 +1,522 @@
+injected.js:27 Failed to import "The أصيلي MADNESS KNIT SHIRT IN ROYAL BLUE": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: 'The أصيلي Multi-Way Unisex Cargo in Charcoal grey', description: ' \nThe أصيلي Multi-Way Cargo in Charcoal grey is a …go.Also, the cargo has 5 pockets 2 on the right ,', priceCents: 110000, images: Array(4), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "The أصيلي Multi-Way Unisex Cargo in Charcoal grey": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: 'The أصيلي Multi-Way Unisex Cargo in Creamy white', description: '\n The أصيلي Multi-Way Cargo in Creamy White is a s…o.Also, the cargo has 5 pockets 2 on the right , ', priceCents: 110000, images: Array(3), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "The أصيلي Multi-Way Unisex Cargo in Creamy white": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] 3 WEEKS\n-(Lasta Wahdak) لست وحدك Hoodie Drop 10% to 🇵🇸', description: '(Lasta Wahdak) لست وحدك hoodie comes in cloudy gre…ING SIZE LARGE .\nFEMALE MODEL IS WEARING SIZE SMA', priceCents: 92000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] 3 WEEKS
+-(Lasta Wahdak) لست وحدك Hoodie Drop 10% to 🇵🇸": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] MAMA THINKS YOU’RE BORING HOODIE DROP', description: 'MAMA THINKS YOU’RE BORING HOODIE is an oversized h… X- LARGE .\nFEMALE MODEL IS WEARING SIZE MEDIUM .', priceCents: 95000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] MAMA THINKS YOU’RE BORING HOODIE DROP": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] The AL ALIS Hoodie Drop', description: 'The AL ALIS Hoodie comes in the color sugar white … Whilst the back is an illustration of both Alis.', priceCents: 92000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] The AL ALIS Hoodie Drop": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] THE ASILI MEGA BAGGY JEANS IN CLOUD GREY WITH BLACK EMBIRODERY', description: 'The Asili Mega baggy jeans in cloud grey with blac…RING SIZE SMALL AND THE GUY IS WEARING SIZE LARGE', priceCents: 106000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] THE ASILI MEGA BAGGY JEANS IN CLOUD GREY WITH BLACK EMBIRODERY": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] THE ASILI MEGA BAGGY JEANS IN CLOUD GREY WITH PINK BUBBLEGUM EMBIRODERY', description: 'The Asili Mega baggy jeans in cloud grey with pink…RING SIZE SMALL AND THE GUY IS WEARING SIZE LARGE', priceCents: 106000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] THE ASILI MEGA BAGGY JEANS IN CLOUD GREY WITH PINK BUBBLEGUM EMBIRODERY": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] THE ATTENTION SEEKER TSHIRT', description: 'The ATTENTION SEEKER T-SHIRT is a black oversized …RING SIZE SMALL\nMALE MODEL IS WEARING SIZE LARGE ', priceCents: 71000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] THE ATTENTION SEEKER TSHIRT": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] The Nefertiti Beyoncé Drop', description: 'The Nefertiti Beyoncé hoodie in charcoal grey', priceCents: 94000, images: Array(3), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] The Nefertiti Beyoncé Drop": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] THE QUESTIONING TSHIRT', description: 'The QUESTIONING T-SHIRT is a sugar-white oversized…RING SIZE SMALL\nMALE MODEL IS WEARING SIZE LARGE ', priceCents: 71000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] THE QUESTIONING TSHIRT": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER] The أصيلي BUBBLY DENIM TSHIRT', description: 'The أصيلي BUBBLY DENIM TSHIRT in the color Cotton … with an extra white crew neck collar in cotton.\n', priceCents: 73000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER] The أصيلي BUBBLY DENIM TSHIRT": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER]-(SET-ELKOL) -ست الكل Hoodie Drop', description: '(SET-ELKOL) ست الكل hoodie comes in navy blue colo…G SIZE LARGE\nFEMALE MODEL IS WEARING SIZE MEDIUM ', priceCents: 95000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER]-(SET-ELKOL) -ست الكل Hoodie Drop": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}
+(anonymous) @ injected.js:27
+handleImportSelected @ MerchantDashboard.tsx:319
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Sending product: {title: '[PRE-ORDER]The Asili Ultimate Fur sweater in the colour sky blue  ', description: 'The Asili Ultimate Fur sweater is a soft touch lon…SIZE MEDIUM .\nMALE MODEL IS WEARING SIZE LARGE  .', priceCents: 103000, images: Array(5), published: true}
+injected.js:204  POST https://53f68298-5051-4b21-b85f-f78a44dc390f-00-3fj5w4nlcpxqu.picard.replit.dev/api/products 400 (Bad Request)
+apply @ injected.js:204
+apiRequest @ queryClient.ts:22
+handleImportSelected @ MerchantDashboard.tsx:316
+await in handleImportSelected
+callCallback2 @ chunk-RPCDYKBN.js?v=def5888a:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=def5888a:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=def5888a:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=def5888a:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=def5888a:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=def5888a:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=def5888a:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=def5888a:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=def5888a:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=def5888a:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=def5888a:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=def5888a:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=def5888a:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=def5888a:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=def5888a:5449Understand this error
+injected.js:27 Failed to import "[PRE-ORDER]The Asili Ultimate Fur sweater in the colour sky blue  ": 400: {"error":"[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"merchantId\"\n    ],\n    \"message\": \"Required\"\n  }\n]"}

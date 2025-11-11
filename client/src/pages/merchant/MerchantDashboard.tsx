@@ -276,6 +276,12 @@ export default function MerchantDashboard() {
       return;
     }
 
+    // Get merchant ID
+    if (!merchantProfile?.id) {
+      toast({ title: "Error", description: "Merchant profile not found", variant: "destructive" });
+      return;
+    }
+
     const productsToImport = scrapedData.products.filter((_: any, idx: number) => 
       selectedProducts.has(idx)
     );
@@ -305,6 +311,7 @@ export default function MerchantDashboard() {
           }
           
           const payload = {
+            merchantId: merchantProfile.id,
             title: product.title || 'Untitled',
             description: product.description || '',
             priceCents: Math.round((product.price || 0) * 100),
