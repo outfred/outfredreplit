@@ -100,10 +100,9 @@ export default function MerchantDashboard() {
     enabled: activeView === "analytics",
   });
 
-  // Fetch merchant profile
+  // Fetch merchant profile (always load for imports and settings)
   const { data: merchantProfile } = useQuery<{ id: string; name: string; city: string; contact: string }>({
     queryKey: ["/api/merchants/me"],
-    enabled: activeView === "settings",
   });
 
   // Update form when profile loads (useEffect to avoid setState during render)
