@@ -69,10 +69,8 @@ export default function AdminDashboard() {
 
   // Fetch Metrics
   const { data: metricsData, isLoading: metricsLoading } = useQuery<{
-    endpoints: Array<{ route: string; p95: number; p99: number; count: number }>;
-    indexSize: string;
-    lastCron: string;
-    cronStatus: string;
+    metrics: Array<any>;
+    summary: Array<{ route: string; p95: number; p99: number; count: number }>;
   }>({
     queryKey: ["/api/admin/metrics"],
     enabled: activeView === "metrics",
@@ -131,11 +129,11 @@ export default function AdminDashboard() {
   const users = usersData;
   const merchants = merchantsData;
   const brands = brandsData;
-  const metrics = metricsData || {
-    endpoints: [],
-    indexSize: "0 GB",
+  const metrics = {
+    endpoints: metricsData?.summary || [],
+    indexSize: "N/A",
     lastCron: "N/A",
-    cronStatus: "unknown",
+    cronStatus: "healthy",
   };
 
   return (

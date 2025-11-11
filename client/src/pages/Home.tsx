@@ -27,7 +27,7 @@ export default function Home() {
   });
 
   const { data: products, isLoading: productsLoading, error: productsError, refetch: refetchProducts } = useQuery<ProductSummary[]>({
-    queryKey: ["/api/products/summary"],
+    queryKey: ["/api/products/summary?published=true"],
   });
 
   const featuredProducts = products?.slice(0, 8) || [];
