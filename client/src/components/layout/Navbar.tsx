@@ -3,19 +3,22 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, User, Menu, X, Languages } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Moon, Sun, User, Menu, X, Languages, LogOut, LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export function Navbar() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -117,24 +120,57 @@ export function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover/95 backdrop-blur-xl border-popover-border">
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" data-testid="link-profile">
-                    {t("profile")}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/merchant" data-testid="link-merchant">
-                    {t("merchant")}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin" data-testid="link-admin">
-                    {t("admin")}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem data-testid="button-logout">
-                  {t("logout")}
-                </DropdownMenuItem>
+                {user ? (
+                  <>
+                    <div className="px-2 py-1.5 text-sm font-medium">
+                      {user.name}
+                    </div>
+                    <div className="px-2 py-1 text-xs text-muted-foreground">
+                      {user.email}
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" data-testid="link-profile">
+                        <User className="w-4 h-4 mr-2" />
+                        {t("profile")}
+                      </Link>
+                    </DropdownMenuItem>
+                    {(user.role === "merchant" || user.role === "admin" || user.role === "owner") && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/merchant" data-testid="link-merchant">
+                          {t("merchant")}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {(user.role === "admin" || user.role === "owner") && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" data-testid="link-admin">
+                          {t("admin")}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout} data-testid="button-logout">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      {t("logout")}
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/login" data-testid="link-login">
+                        <LogIn className="w-4 h-4 mr-2" />
+                        {t("auth.login", "Login")}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/register" data-testid="link-register">
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        {t("auth.register", "Register")}
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 

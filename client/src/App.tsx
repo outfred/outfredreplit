@@ -5,9 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/layout/Navbar";
 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Home from "@/pages/Home";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
 import Search from "@/pages/Search";
 import ProductPage from "@/pages/ProductPage";
 import OutfitBuilder from "@/pages/OutfitBuilder";
@@ -20,12 +24,38 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       <Route path="/search" component={Search} />
       <Route path="/product/:id" component={ProductPage} />
-      <Route path="/outfit-builder" component={OutfitBuilder} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/merchant" component={MerchantDashboard} />
-      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/outfit-builder">
+        {() => (
+          <ProtectedRoute>
+            <OutfitBuilder />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/profile">
+        {() => (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/merchant">
+        {() => (
+          <ProtectedRoute roles={["merchant", "admin", "owner"]}>
+            <MerchantDashboard />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin">
+        {() => (
+          <ProtectedRoute roles={["admin", "owner"]}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -37,9 +67,11 @@ function App() {
       <TooltipProvider>
         <ThemeProvider>
           <LanguageProvider>
-            <Navbar />
-            <Router />
-            <Toaster />
+            <AuthProvider>
+              <Navbar />
+              <Router />
+              <Toaster />
+            </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </TooltipProvider>
