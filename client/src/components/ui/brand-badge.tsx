@@ -1,9 +1,12 @@
 import { cn } from "@/lib/utils";
 import { GlassCard } from "./glass-card";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface BrandBadgeProps {
   id: string;
   name?: string;
+  nameEn?: string;
+  nameAr?: string;
   logoUrl?: string;
   onClick?: () => void;
   className?: string;
@@ -12,11 +15,18 @@ export interface BrandBadgeProps {
 export function BrandBadge({
   id,
   name,
+  nameEn,
+  nameAr,
   logoUrl,
   onClick,
   className,
 }: BrandBadgeProps) {
-  const displayName = name || "Unknown";
+  const { language } = useLanguage();
+  
+  // Support both old (name) and new (nameEn/nameAr) schema
+  const displayName = name || 
+    (language === "ar" ? (nameAr || nameEn) : nameEn) || 
+    "Unknown";
   
   return (
     <GlassCard

@@ -30,11 +30,21 @@ export default function BrandDetails() {
 
   const { data: brand, isLoading: brandLoading } = useQuery<Brand>({
     queryKey: ["/api/brands", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/brands/${id}`);
+      if (!res.ok) throw new Error("Brand not found");
+      return res.json();
+    },
     enabled: !!id,
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductSummary[]>({
-    queryKey: ["/api/products/summary", { brandId: id }],
+    queryKey: ["/api/products/summary", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/summary?brandId=${id}`);
+      if (!res.ok) throw new Error("Failed to fetch products");
+      return res.json();
+    },
     enabled: !!id,
   });
 

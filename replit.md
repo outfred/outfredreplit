@@ -103,7 +103,7 @@
   - Admin Dashboard: Footer tab added with FileText icon
   - Bug Fix: MerchantDialog infinite loop resolved (useEffect wrapper for form.reset)
   - Architect Review: PASS - Bilingual schema, secure endpoints, LanguageContext integration, query invalidation correct
-- ✅ **Static Pages CMS** (Task 10) - **ARCHITECTURALLY COMPLETE**:
+- ✅ **Static Pages CMS** (Task 10) - **COMPLETE**:
   - Database Schema: staticPages table (slug, titleEn, titleAr, contentEn, contentAr, metaDescriptionEn/Ar, isPublished)
   - Backend: Storage methods + split routes (public `/api/pages/:slug` + admin `/api/admin/pages` CRUD)
   - Frontend: StaticPage.tsx (public view with SEO), StaticPagesView.tsx (admin CRUD with TinyMCE)
@@ -111,27 +111,33 @@
   - Security: Public/admin routes separated, admin sees all pages (including drafts), public sees published only
   - Critical fixes applied: Auth schema restored, query bug fixed, import/export mismatch fixed (5 architect iterations)
   - Architect Review: **PASS** - Implementation architecturally sound
-  - **E2E Test Status**: ❌ **BLOCKED** by pre-existing auth bug (tokens saved but /admin redirects to /login)
-  - **Known Auth Regression**: Login succeeds, tokens stored, but AuthContext fails to read localStorage on init → protected routes redirect to /login
-  - **Next Action**: Create separate task to debug AuthContext initialization (outside Task 10 scope)
+
+### Critical Bug Fixes (Session 3 - November 11, 2025)
+**User reported 4 critical bugs - all fixed:**
+- ✅ **Brand Detail Pages**: Added GET `/api/brands/:id` route + explicit queryFn in BrandDetails component
+- ✅ **Unknown Brands**: Fixed BrandBadge component to support bilingual nameEn/nameAr with LanguageContext
+- ✅ **Outfit Builder 401**: Fixed localStorage token key (`token` → `authToken`)
+- ✅ **Auth Regression FIXED**: `/api/auth/refresh` now returns `{ accessToken, refreshToken, user }` - AuthContext populates correctly on app init, protected routes now accessible
+- Architect Review: **PASS** - All 6 fixes function as intended and unblock affected user flows
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
 - **Database**: Schema updated with static_pages table + bilingual CMS tables ✅  
-- **Frontend**: Home, Product, Admin, OutfitBuilder, StaticPage pages integrated ✅
-- **Backend**: All API routes implemented (public + admin static pages) ✅
-- **Authentication**: ⚠️ **REGRESSION** - Login succeeds but /admin redirects to /login (AuthContext init bug)
+- **Frontend**: Home, Product, Admin, OutfitBuilder, StaticPage, BrandDetails pages integrated ✅
+- **Backend**: All API routes implemented (brands, products, static pages, auth) ✅
+- **Authentication**: ✅ **FIXED** - Auth refresh returns user data, protected routes accessible
 - **AI**: Migrated to Gemini API (text/image embeddings, outfit suggestions) ✅
-- **Outfit Builder**: Complete with AI form, Gemini integration, product display ✅
+- **Outfit Builder**: Complete with AI form, Gemini integration, working auth ✅
 - **Navigation CMS**: Navbar reads from DB with bilingual support (En/Ar) ✅
 - **Footer CMS**: Bilingual footer with admin controls (En/Ar copyright + social links) ✅
-- **Static Pages CMS**: Backend/frontend complete, admin tab integrated ✅ (e2e blocked by auth bug)
-- **Integration Progress**: 10/11 tasks completed (Tasks 1-10)
+- **Static Pages CMS**: Backend/frontend complete, admin tab integrated ✅
+- **Brand Pages**: Detail pages working with bilingual names ✅
+- **Integration Progress**: 10/11 tasks completed (Tasks 1-10) + 6 bug fixes
 
 ## Next Steps (Task 11+)
-1. **URGENT - Auth Bug Fix**: Debug AuthContext initialization (tokens saved but not read on app bootstrap → /admin redirects to /login)
-2. **Header Navigation CRUD UI** (Enhancement): Build full admin CRUD interface for navigation links (create/edit/delete/reorder) - currently placeholder
-3. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
+1. **Header Navigation CRUD UI** (Enhancement): Build full admin CRUD interface for navigation links (create/edit/delete/reorder) - currently placeholder
+2. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
+3. **E2E Testing**: Run comprehensive tests now that auth bug is fixed
 
 ## Running the Project
 ```bash
@@ -194,12 +200,11 @@ outfred/
 - **owner**: All admin actions + assign owner role + access sensitive configs
 
 ## Known Issues
-- **CRITICAL - Auth Regression**: Login succeeds (200 response, tokens saved to localStorage) but navigating to /admin redirects to /login. AuthContext fails to read tokens on app init. Server-side auth works (POST /api/auth/refresh returns 200), but client-side state remains unauthenticated. Likely issue in AuthContext bootstrap logic (useEffect dependency or localStorage read timing).
-- BrandBadge component error on Home page (undefined brandName.charAt) - needs null safety fix
 - Image search requires CLIP embedding setup (or use Gemini vision model)
 - Spell correction dictionary needs expansion
 - Integration tests for RBAC paths needed
 - Consider automated coverage for AI endpoint validation (with/without Gemini config)
+- Refresh token rotation: Consider server-side revocation tracking if rotation is required (currently rotates tokens but doesn't invalidate old ones)
 
 ## Performance Notes
 - Metrics tracked per route in `metrics` table

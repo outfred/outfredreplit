@@ -131,7 +131,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const newAccessToken = generateAccessToken(user);
-      res.json({ accessToken: newAccessToken });
+      const newRefreshToken = generateRefreshToken(user);
+      
+      res.json({ 
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role }
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Invalid input" });
     }
@@ -668,6 +674,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/brands", async (req, res) => {
     const brands = await storage.listBrands();
     res.json(brands);
+  });
+
+  // Get single brand
+  app.get("/api/brands/:id", async (req, res) => {
+    try {
+      const brand = await storage.getBrand(req.params.id);
+      if (!brand) {
+        return res.status(404).json({ error: "Brand not found" });
+      }
+      res.json(brand);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch brand" });
+    }
   });
 
   // Create brand (admin only) with logo upload
