@@ -292,13 +292,22 @@ export default function MerchantDashboard() {
     try {
       for (const product of productsToImport) {
         try {
+          // Filter and validate images
+          const validImages = (product.images || [])
+            .filter((img: string) => img && typeof img === 'string' && img.trim())
+            .map((img: string) => img.trim());
+          
+          // Skip products without valid images
+          if (validImages.length === 0) {
+            failCount++;
+            continue;
+          }
+          
           await apiRequest("POST", "/api/products", {
-            title: product.title,
-            description: product.description,
-            priceCents: Math.round(product.price * 100),
-            images: product.images.filter((img: string) => img?.trim()).length > 0 
-              ? product.images.filter((img: string) => img?.trim()) 
-              : [],
+            title: product.title || 'Untitled',
+            description: product.description || '',
+            priceCents: Math.round((product.price || 0) * 100),
+            images: validImages,
             published: true,
           });
           successCount++;
@@ -552,7 +561,7 @@ export default function MerchantDashboard() {
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="https://asilieg.com/collections/all"
+                    placeholder="https://yourwebsite.com/collections/all"
                     value={scrapeUrl}
                     onChange={(e) => setScrapeUrl(e.target.value)}
                     data-testid="input-url-import"
