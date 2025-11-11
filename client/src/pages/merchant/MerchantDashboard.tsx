@@ -206,6 +206,11 @@ export default function MerchantDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      if (merchantProfile?.id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
+        });
+      }
       toast({ title: "Product deleted successfully" });
     },
     onError: () => {
@@ -330,6 +335,11 @@ export default function MerchantDashboard() {
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      if (merchantProfile?.id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
+        });
+      }
       toast({ 
         title: `Imported ${data.imported} products`,
         description: data.failed > 0 ? `${data.failed} rows failed` : undefined 
@@ -381,6 +391,11 @@ export default function MerchantDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      if (merchantProfile?.id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
+        });
+      }
       toast({ title: "Product created successfully!" });
       setProductDialog({ open: false });
       setScrapedData(null);
@@ -404,6 +419,11 @@ export default function MerchantDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
+      if (merchantProfile?.id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
+        });
+      }
       toast({ title: "Product updated successfully!" });
       setProductDialog({ open: false });
     },
@@ -497,6 +517,11 @@ export default function MerchantDashboard() {
       // Invalidate queries after all imports
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      if (merchantProfile?.id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/products/summary", { merchantId: merchantProfile.id }] 
+        });
+      }
       
       // Show summary
       if (failCount === 0) {

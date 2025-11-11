@@ -55,7 +55,7 @@ export default function MerchantStore() {
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductSummary[]>({
-    queryKey: [`/api/products/summary?merchantId=${id}`],
+    queryKey: ["/api/products/summary", { merchantId: id }],
     enabled: !!id,
   });
 

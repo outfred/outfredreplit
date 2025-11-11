@@ -39,7 +39,7 @@ export default function BrandDetails() {
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery<ProductSummary[]>({
-    queryKey: [`/api/products/summary?brandId=${id}`],
+    queryKey: ["/api/products/summary", { brandId: id }],
     enabled: !!id,
   });
 
