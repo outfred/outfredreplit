@@ -18,6 +18,10 @@ import {
   MousePointerClick,
   RefreshCw,
   Loader2,
+  Globe,
+  Edit,
+  Trash2,
+  Save,
 } from "lucide-react";
 import {
   Table,
@@ -28,6 +32,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function MerchantDashboard() {
   const { t } = useLanguage();
@@ -39,6 +54,36 @@ export default function MerchantDashboard() {
   const [storeCity, setStoreCity] = useState("");
   const [storeContact, setStoreContact] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
+
+  // Scraper dialog state
+  const [scraperOpen, setScraperOpen] = useState(false);
+  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [scrapedData, setScrapedData] = useState<{
+    title: string;
+    description: string;
+    price: number;
+    images: string[];
+  } | null>(null);
+
+  // Product dialog state (for create/edit)
+  const [productDialog, setProductDialog] = useState<{
+    open: boolean;
+    product?: Product | null;
+    initialData?: {
+      title: string;
+      description: string;
+      price: number;
+      images: string[];
+    };
+  }>({ open: false });
+
+  // Product form state
+  const [productForm, setProductForm] = useState({
+    title: "",
+    description: "",
+    price: 0,
+    images: [""],
+  });
 
   // Fetch products
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
@@ -131,6 +176,137 @@ export default function MerchantDashboard() {
       toast({ title: "Error", description: "Failed to import CSV", variant: "destructive" });
     },
   });
+
+  // Scrape product mutation
+  const scrapeMutation = useMutation({
+    mutationFn: async (url: string) => {
+      return await apiRequest("/api/merchant/scrape-product", {
+        method: "POST",
+        body: JSON.stringify({ url }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: (data: any) => {
+      setScrapedData(data);
+      toast({ title: "Product scraped successfully!" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Scraping failed", 
+        description: error.message || "Failed to scrape product",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Create product mutation
+  const createProductMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("/api/products", {
+        method: "POST",
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          priceCents: Math.round(data.price * 100),
+          images: data.images.filter((img: string) => img.trim()),
+          published: true,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      toast({ title: "Product created successfully!" });
+      setProductDialog({ open: false });
+      setScrapedData(null);
+      setScrapeUrl("");
+      setScraperOpen(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create product", variant: "destructive" });
+    },
+  });
+
+  // Update product mutation
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return await apiRequest(`/api/products/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          priceCents: Math.round(data.price * 100),
+          images: data.images.filter((img: string) => img.trim()),
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
+      toast({ title: "Product updated successfully!" });
+      setProductDialog({ open: false });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update product", variant: "destructive" });
+    },
+  });
+
+  // Handle scrape submit
+  const handleScrape = () => {
+    if (!scrapeUrl.trim()) {
+      toast({ title: "Error", description: "Please enter a URL", variant: "destructive" });
+      return;
+    }
+    scrapeMutation.mutate(scrapeUrl);
+  };
+
+  // Handle save scraped product
+  const handleSaveScraped = () => {
+    if (!scrapedData) return;
+    setProductForm({
+      title: scrapedData.title,
+      description: scrapedData.description,
+      price: scrapedData.price,
+      images: scrapedData.images.length > 0 ? scrapedData.images : [""],
+    });
+    setProductDialog({ open: true, initialData: scrapedData });
+  };
+
+  // Handle open create dialog
+  const handleOpenCreate = () => {
+    setProductForm({ title: "", description: "", price: 0, images: [""] });
+    setProductDialog({ open: true });
+  };
+
+  // Handle open edit dialog
+  const handleOpenEdit = (product: Product) => {
+    setProductForm({
+      title: product.title,
+      description: product.description || "",
+      price: product.priceCents / 100,
+      images: product.images.length > 0 ? product.images : [""],
+    });
+    setProductDialog({ open: true, product });
+  };
+
+  // Handle save product
+  const handleSaveProduct = () => {
+    if (!productForm.title.trim()) {
+      toast({ title: "Error", description: "Title is required", variant: "destructive" });
+      return;
+    }
+    if (productForm.price <= 0) {
+      toast({ title: "Error", description: "Price must be greater than 0", variant: "destructive" });
+      return;
+    }
+
+    if (productDialog.product) {
+      updateProductMutation.mutate({ id: productDialog.product.id, data: productForm });
+    } else {
+      createProductMutation.mutate(productForm);
+    }
+  };
 
   return (
     <div className="min-h-screen pt-24 px-4 pb-16">

@@ -767,6 +767,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Scrape product from URL
+  app.post("/api/merchant/scrape-product", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ error: "URL is required" });
+      }
+
+      // Validate URL format
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(url);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          return res.status(400).json({ error: "Only HTTP/HTTPS URLs are allowed" });
+        }
+      } catch (error) {
+        return res.status(400).json({ error: "Invalid URL format" });
+      }
+
+      // Fetch HTML from URL with timeout and user agent
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Outfred Product Importer/1.0',
+        },
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        return res.status(400).json({ error: `Failed to fetch URL: ${response.statusText}` });
+      }
+
+      const html = await response.text();
+      const { load } = await import("cheerio");
+      const $ = load(html);
+
+      // Extract product data using common e-commerce patterns
+      let title = 
+        $('meta[property="og:title"]').attr('content') ||
+        $('meta[name="twitter:title"]').attr('content') ||
+        $('h1').first().text() ||
+        $('title').text();
+
+      let description =
+        $('meta[property="og:description"]').attr('content') ||
+        $('meta[name="description"]').attr('content') ||
+        $('meta[name="twitter:description"]').attr('content') ||
+        $('p').first().text();
+
+      let priceText =
+        $('[itemprop="price"]').attr('content') ||
+        $('[class*="price"]').first().text() ||
+        $('[id*="price"]').first().text() ||
+        '';
+
+      // Extract price number
+      const priceMatch = priceText.match(/[\d,]+(\.\d{2})?/);
+      const price = priceMatch ? parseFloat(priceMatch[0].replace(',', '')) : 0;
+
+      // Extract images
+      const images: string[] = [];
+      const ogImage = $('meta[property="og:image"]').attr('content');
+      if (ogImage) images.push(ogImage);
+
+      $('[itemprop="image"]').each((_, el) => {
+        const src = $(el).attr('src') || $(el).attr('content');
+        if (src && !images.includes(src)) images.push(src);
+      });
+
+      $('img[class*="product"], img[id*="product"]').each((_, el) => {
+        const src = $(el).attr('src');
+        if (src && !images.includes(src)) images.push(src);
+      });
+
+      // Ensure absolute URLs
+      const baseUrl = new URL(url).origin;
+      const absoluteImages = images.map(img => {
+        if (img.startsWith('http')) return img;
+        if (img.startsWith('//')) return 'https:' + img;
+        if (img.startsWith('/')) return baseUrl + img;
+        return baseUrl + '/' + img;
+      });
+
+      // Sanitize text data to prevent XSS
+      const sanitizeText = (text: string) => {
+        return text
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/<[^>]+>/g, '')
+          .trim();
+      };
+
+      res.json({
+        title: sanitizeText(title || 'Untitled Product'),
+        description: sanitizeText(description || '').substring(0, 500),
+        price: price || 0,
+        images: absoluteImages.slice(0, 5), // Max 5 images
+        sourceUrl: url,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to scrape product" });
+    }
+  });
+
   // ===== BRANDS ROUTES =====
   
   // List brands
