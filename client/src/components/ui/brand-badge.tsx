@@ -3,7 +3,7 @@ import { GlassCard } from "./glass-card";
 
 export interface BrandBadgeProps {
   id: string;
-  name: string;
+  name?: string;
   logoUrl?: string;
   onClick?: () => void;
   className?: string;
@@ -16,6 +16,8 @@ export function BrandBadge({
   onClick,
   className,
 }: BrandBadgeProps) {
+  const displayName = name || "Unknown";
+  
   return (
     <GlassCard
       variant="hover"
@@ -29,16 +31,16 @@ export function BrandBadge({
     >
       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
         {logoUrl ? (
-          <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
+          <img src={logoUrl} alt={displayName} className="w-full h-full object-cover" />
         ) : (
           <span className="text-lg font-bold text-primary">
-            {name.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </span>
         )}
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-sm truncate" data-testid={`text-brand-${id}`}>
-          {name}
+          {displayName}
         </h3>
       </div>
     </GlassCard>
