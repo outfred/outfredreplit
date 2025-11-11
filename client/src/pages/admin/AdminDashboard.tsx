@@ -1,5 +1,9 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
+import type { User, Merchant, Brand } from "@shared/schema";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowButton } from "@/components/ui/glow-button";
 import { Button } from "@/components/ui/button";
@@ -40,35 +44,98 @@ import {
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [activeView, setActiveView] = useState<
     "users" | "merchants" | "brands" | "ai" | "metrics" | "config"
   >("users");
 
-  // Mock data
-  const users = [
-    { id: "1", name: "John Doe", email: "john@example.com", role: "user" },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", role: "merchant" },
-  ];
+  // Fetch Users
+  const { data: usersData = [], isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+    enabled: activeView === "users",
+  });
 
-  const merchants = [
-    { id: "1", name: "Cairo Fashion", owner: "Jane Smith", status: "active", city: "Cairo" },
-    { id: "2", name: "Alexandria Style", owner: "Ahmed Ali", status: "pending", city: "Alexandria" },
-  ];
+  // Fetch Merchants
+  const { data: merchantsData = [], isLoading: merchantsLoading } = useQuery<Merchant[]>({
+    queryKey: ["/api/admin/merchants"],
+    enabled: activeView === "merchants",
+  });
 
-  const brands = [
-    { id: "1", name: "Cairo Streetwear", city: "Cairo" },
-    { id: "2", name: "Alexandria Fashion", city: "Alexandria" },
-  ];
+  // Fetch Brands
+  const { data: brandsData = [], isLoading: brandsLoading } = useQuery<Brand[]>({
+    queryKey: ["/api/brands"],
+    enabled: activeView === "brands",
+  });
 
-  const metrics = {
-    endpoints: [
-      { route: "/api/products", p95: 142, p99: 234, count: 1245 },
-      { route: "/api/search/text", p95: 187, p99: 312, count: 892 },
-      { route: "/api/search/image", p95: 456, p99: 678, count: 234 },
-    ],
-    indexSize: "2.3 GB",
-    lastCron: "15 minutes ago",
-    cronStatus: "healthy",
+  // Fetch Metrics
+  const { data: metricsData, isLoading: metricsLoading } = useQuery<{
+    endpoints: Array<{ route: string; p95: number; p99: number; count: number }>;
+    indexSize: string;
+    lastCron: string;
+    cronStatus: string;
+  }>({
+    queryKey: ["/api/admin/metrics"],
+    enabled: activeView === "metrics",
+  });
+
+  // Fetch Config
+  const { data: configData, isLoading: configLoading } = useQuery({
+    queryKey: ["/api/admin/config"],
+    enabled: activeView === "config" || activeView === "ai",
+  });
+
+  // Update User Mutation
+  const updateUser = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<User> }) => {
+      const res = await apiRequest("PATCH", `/api/admin/users/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: t("success"), description: "User updated successfully" });
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to update user", variant: "destructive" });
+    },
+  });
+
+  // Update Merchant Mutation
+  const updateMerchant = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Merchant> }) => {
+      const res = await apiRequest("PATCH", `/api/admin/merchants/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/merchants"] });
+      toast({ title: t("success"), description: "Merchant updated successfully" });
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to update merchant", variant: "destructive" });
+    },
+  });
+
+  // Delete Merchant Mutation
+  const deleteMerchant = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/merchants/${id}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/merchants"] });
+      toast({ title: t("success"), description: "Merchant deleted successfully" });
+    },
+    onError: () => {
+      toast({ title: t("error"), description: "Failed to delete merchant", variant: "destructive" });
+    },
+  });
+
+  const users = usersData;
+  const merchants = merchantsData;
+  const brands = brandsData;
+  const metrics = metricsData || {
+    endpoints: [],
+    indexSize: "0 GB",
+    lastCron: "N/A",
+    cronStatus: "unknown",
   };
 
   return (
@@ -209,7 +276,7 @@ export default function AdminDashboard() {
                   {merchants.map((merchant) => (
                     <TableRow key={merchant.id} className="border-white/10" data-testid={`row-merchant-${merchant.id}`}>
                       <TableCell className="font-medium">{merchant.name}</TableCell>
-                      <TableCell>{merchant.owner}</TableCell>
+                      <TableCell>{merchant.ownerUserId}</TableCell>
                       <TableCell>{merchant.city}</TableCell>
                       <TableCell>
                         <Badge variant={merchant.status === "active" ? "default" : "secondary"}>
@@ -219,11 +286,23 @@ export default function AdminDashboard() {
                       <TableCell className="text-end">
                         <div className="flex justify-end gap-2">
                           {merchant.status === "pending" && (
-                            <Button size="sm" variant="ghost" data-testid={`button-approve-${merchant.id}`}>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => updateMerchant.mutate({ id: merchant.id, data: { status: "active" } })}
+                              disabled={updateMerchant.isPending}
+                              data-testid={`button-approve-${merchant.id}`}
+                            >
                               <ShieldCheck className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" data-testid={`button-ban-${merchant.id}`}>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => updateMerchant.mutate({ id: merchant.id, data: { status: "banned" } })}
+                            disabled={updateMerchant.isPending}
+                            data-testid={`button-ban-${merchant.id}`}
+                          >
                             <ShieldBan className="w-4 h-4" />
                           </Button>
                         </div>
@@ -399,7 +478,7 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {metrics.endpoints.map((endpoint) => (
+                  {metrics.endpoints.map((endpoint: any) => (
                     <TableRow key={endpoint.route} className="border-white/10">
                       <TableCell className="font-mono text-sm">{endpoint.route}</TableCell>
                       <TableCell>

@@ -4,7 +4,7 @@ import { Language, translations, TranslationKey } from "@/lib/i18n";
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey, fallback?: string) => string;
   dir: "ltr" | "rtl";
 }
 
@@ -36,8 +36,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLanguageState(lang);
   };
 
-  const t = (key: TranslationKey): string => {
-    return translations[language][key] || key;
+  const t = (key: TranslationKey, fallback?: string): string => {
+    return translations[language][key] || fallback || key;
   };
 
   return (
