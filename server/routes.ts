@@ -603,6 +603,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== MERCHANT-SPECIFIC ROUTES =====
   
+  // Get own merchant profile
+  app.get("/api/merchants/me", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const merchant = await storage.getMerchantByOwner(req.user!.userId);
+      if (!merchant) {
+        return res.status(404).json({ error: "Merchant profile not found" });
+      }
+      res.json(merchant);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch merchant profile" });
+    }
+  });
+
   // Get merchant analytics
   app.get("/api/merchant/analytics", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {

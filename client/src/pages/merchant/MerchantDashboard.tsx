@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GlowButton } from "@/components/ui/glow-button";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/hooks/use-toast";
+import type { Product } from "@shared/schema";
 import {
   Package,
   Upload,
@@ -13,6 +17,7 @@ import {
   Eye,
   MousePointerClick,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import {
   Table,
@@ -26,36 +31,106 @@ import { Badge } from "@/components/ui/badge";
 
 export default function MerchantDashboard() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [activeView, setActiveView] = useState<"products" | "import" | "analytics" | "settings">("products");
 
-  // Mock data
-  const products = [
-    {
-      id: "1",
-      title: "Black Hoodie",
-      price: 799,
-      published: true,
-      views: 245,
-      clicks: 32,
-      image: "/placeholder-product.png",
-    },
-    {
-      id: "2",
-      title: "Blue Jeans",
-      price: 899,
-      published: true,
-      views: 189,
-      clicks: 24,
-      image: "/placeholder-product.png",
-    },
-  ];
+  // State for forms
+  const [storeName, setStoreName] = useState("");
+  const [storeCity, setStoreCity] = useState("");
+  const [storeContact, setStoreContact] = useState("");
+  const [csvFile, setCsvFile] = useState<File | null>(null);
 
-  const analytics = {
-    totalViews: 434,
-    totalClicks: 56,
-    conversionRate: 12.9,
-    revenue: 0,
-  };
+  // Fetch products
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/merchant/products"],
+  });
+
+  // Fetch analytics
+  const { data: analytics, isLoading: analyticsLoading } = useQuery<{
+    totalProducts: number;
+    publishedProducts: number;
+    totalViews: number;
+    totalClicks: number;
+    conversionRate: number;
+    revenue: number;
+  }>({
+    queryKey: ["/api/merchant/analytics"],
+    enabled: activeView === "analytics",
+  });
+
+  // Fetch merchant profile
+  const { data: merchantProfile } = useQuery<{ id: string; name: string; city: string; contact: string }>({
+    queryKey: ["/api/merchants/me"],
+    enabled: activeView === "settings",
+    onSuccess: (data) => {
+      setStoreName(data.name || "");
+      setStoreCity(data.city || "");
+      setStoreContact(data.contact || "");
+    },
+  });
+
+  // Delete product mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      await apiRequest(`/api/products/${productId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      toast({ title: t("productDeleted") || "Product deleted successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete product",
+        variant: "destructive"
+      });
+    },
+  });
+
+  // Update merchant profile mutation
+  const updateMerchantMutation = useMutation({
+    mutationFn: async (data: { name: string; city: string; contact: string }) => {
+      await apiRequest("/api/merchants/me", {
+        method: "PATCH",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/merchants/me"] });
+      toast({ title: "Store settings updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update settings", variant: "destructive" });
+    },
+  });
+
+  // CSV import mutation
+  const importCsvMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return await apiRequest("/api/merchant/import/csv", {
+        method: "POST",
+        body: formData,
+      });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/merchant/analytics"] });
+      toast({ 
+        title: `Imported ${data.imported} products`,
+        description: data.failed > 0 ? `${data.failed} rows failed` : undefined 
+      });
+      setCsvFile(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to import CSV", variant: "destructive" });
+    },
+  });
 
   return (
     <div className="min-h-screen pt-24 px-4 pb-16">
@@ -123,7 +198,12 @@ export default function MerchantDashboard() {
               </div>
             </div>
 
-            {products.length === 0 ? (
+            {productsLoading ? (
+              <GlassCard className="p-8 text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading products...</p>
+              </GlassCard>
+            ) : products.length === 0 ? (
               <EmptyState
                 icon={Package}
                 title="No products yet"
@@ -149,17 +229,17 @@ export default function MerchantDashboard() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <img
-                              src={product.image}
+                              src={product.images[0] || "/placeholder-product.png"}
                               alt={product.title}
                               className="w-12 h-12 rounded-lg object-cover"
                             />
                             <span className="font-medium">{product.title}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{product.price} EGP</TableCell>
+                        <TableCell>{(product.priceCents / 100).toFixed(0)} EGP</TableCell>
                         <TableCell>
                           <Badge variant={product.published ? "default" : "secondary"}>
-                            {product.published ? t("active") : t("pending")}
+                            {product.published ? t("published") : t("draft")}
                           </Badge>
                         </TableCell>
                         <TableCell>{product.views}</TableCell>
@@ -169,7 +249,17 @@ export default function MerchantDashboard() {
                             <Button size="sm" variant="ghost" data-testid={`button-edit-${product.id}`}>
                               {t("edit")}
                             </Button>
-                            <Button size="sm" variant="ghost" data-testid={`button-delete-${product.id}`}>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              data-testid={`button-delete-${product.id}`}
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this product?")) {
+                                  deleteMutation.mutate(product.id);
+                                }
+                              }}
+                              disabled={deleteMutation.isPending}
+                            >
                               {t("delete")}
                             </Button>
                           </div>
@@ -203,14 +293,29 @@ export default function MerchantDashboard() {
                     className="sr-only"
                     id="csv-upload"
                     data-testid="input-csv-upload"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setCsvFile(file);
+                        importCsvMutation.mutate(file);
+                      }
+                    }}
                   />
                   <label
                     htmlFor="csv-upload"
                     className="cursor-pointer flex flex-col items-center gap-2"
                   >
-                    <GlowButton variant="primary" type="button" onClick={() => document.getElementById("csv-upload")?.click()}>
-                      Choose File
+                    <GlowButton 
+                      variant="primary" 
+                      type="button" 
+                      onClick={() => document.getElementById("csv-upload")?.click()}
+                      disabled={importCsvMutation.isPending}
+                      data-testid="button-choose-file"
+                    >
+                      {importCsvMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                      {importCsvMutation.isPending ? "Importing..." : "Choose File"}
                     </GlowButton>
+                    {csvFile && <p className="text-sm text-muted-foreground">{csvFile.name}</p>}
                     <p className="text-sm text-muted-foreground">or drag and drop</p>
                   </label>
                 </div>
@@ -226,36 +331,43 @@ export default function MerchantDashboard() {
         {activeView === "analytics" && (
           <div>
             <h2 className="text-2xl font-bold mb-6">{t("analytics")}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <GlassCard className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">{t("views")}</p>
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold" data-testid="text-total-views">{analytics.totalViews}</p>
+            {analyticsLoading ? (
+              <GlassCard className="p-8 text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading analytics...</p>
               </GlassCard>
-              <GlassCard className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">{t("clicks")}</p>
-                  <MousePointerClick className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold" data-testid="text-total-clicks">{analytics.totalClicks}</p>
-              </GlassCard>
-              <GlassCard className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Conversion</p>
-                  <BarChart3 className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold" data-testid="text-conversion-rate">{analytics.conversionRate}%</p>
-              </GlassCard>
-              <GlassCard className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">Revenue</p>
-                  <Package className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold" data-testid="text-revenue">{analytics.revenue} EGP</p>
-              </GlassCard>
-            </div>
+            ) : analytics ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <GlassCard className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-muted-foreground">{t("views")}</p>
+                    <Eye className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-3xl font-bold" data-testid="text-total-views">{analytics.totalViews}</p>
+                </GlassCard>
+                <GlassCard className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-muted-foreground">{t("clicks")}</p>
+                    <MousePointerClick className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-3xl font-bold" data-testid="text-total-clicks">{analytics.totalClicks}</p>
+                </GlassCard>
+                <GlassCard className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-muted-foreground">Conversion</p>
+                    <BarChart3 className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-3xl font-bold" data-testid="text-conversion-rate">{analytics.conversionRate}%</p>
+                </GlassCard>
+                <GlassCard className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-muted-foreground">Revenue</p>
+                    <Package className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-3xl font-bold" data-testid="text-revenue">{analytics.revenue} EGP</p>
+                </GlassCard>
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -272,6 +384,8 @@ export default function MerchantDashboard() {
                     className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     placeholder="Your store name"
                     data-testid="input-store-name"
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -281,6 +395,8 @@ export default function MerchantDashboard() {
                     className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     placeholder="Cairo"
                     data-testid="input-city"
+                    value={storeCity}
+                    onChange={(e) => setStoreCity(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -290,10 +406,22 @@ export default function MerchantDashboard() {
                     className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                     placeholder="contact@store.com"
                     data-testid="input-contact"
+                    value={storeContact}
+                    onChange={(e) => setStoreContact(e.target.value)}
                   />
                 </div>
-                <Button className="w-full" data-testid="button-save-store-settings">
-                  {t("save")}
+                <Button 
+                  className="w-full" 
+                  data-testid="button-save-store-settings"
+                  onClick={() => updateMerchantMutation.mutate({ 
+                    name: storeName, 
+                    city: storeCity, 
+                    contact: storeContact 
+                  })}
+                  disabled={updateMerchantMutation.isPending}
+                >
+                  {updateMerchantMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                  {updateMerchantMutation.isPending ? "Saving..." : t("save")}
                 </Button>
               </div>
             </GlassCard>
