@@ -678,46 +678,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file provided" });
       }
 
-      const csvData = req.file.buffer.toString("utf-8");
-      const lines = csvData.split("\n").filter(l => l.trim());
-      
-      if (lines.length < 2) {
-        return res.status(400).json({ error: "CSV file is empty or invalid" });
-      }
-
       const merchant = await storage.getMerchantByOwner(req.user!.userId);
       if (!merchant) {
         return res.status(404).json({ error: "Merchant profile not found" });
       }
 
-      // Parse CSV (simple implementation)
-      const headers = lines[0].split(",").map(h => h.trim());
-      const products = [];
+      // Parse CSV using csv-parse
+      const { parse } = await import("csv-parse/sync");
+      const records = parse(req.file.buffer, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      });
 
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",").map(v => v.trim());
-        const product: any = { merchantId: merchant.id };
-        
-        headers.forEach((header, index) => {
-          const value = values[index];
-          if (header === "title") product.title = value;
-          if (header === "description") product.description = value;
-          if (header === "price") product.priceCents = parseInt(value) * 100;
-          if (header === "images") product.images = value ? [value] : [];
-          if (header === "colors") product.colors = value ? value.split(";") : [];
-          if (header === "sizes") product.sizes = value ? value.split(";") : [];
-          if (header === "tags") product.tags = value ? value.split(";") : [];
-        });
+      if (records.length === 0) {
+        return res.status(400).json({ error: "CSV file is empty" });
+      }
 
-        if (product.title && product.priceCents && product.images?.length) {
-          const created = await storage.createProduct(product);
-          products.push(created);
+      if (records.length > 1000) {
+        return res.status(400).json({ error: "CSV file too large (max 1000 products)" });
+      }
+
+      // Validate and transform records
+      const validatedProducts: InsertProduct[] = [];
+      const failed: Array<{ row: number; error: string }> = [];
+
+      for (let i = 0; i < records.length; i++) {
+        const row = records[i];
+        try {
+          const product: InsertProduct = {
+            merchantId: merchant.id,
+            title: row.title || row.Title,
+            description: row.description || row.Description || undefined,
+            priceCents: Math.round(parseFloat(row.price || row.Price) * 100),
+            images: row.images || row.Images ? [row.images || row.Images] : [],
+            colors: row.colors ? row.colors.split(";") : undefined,
+            sizes: row.sizes ? row.sizes.split(";") : undefined,
+            tags: row.tags ? row.tags.split(";") : undefined,
+            brandId: row.brandId || undefined,
+          };
+
+          if (!product.title) {
+            failed.push({ row: i + 1, error: "Missing title" });
+            continue;
+          }
+
+          if (!product.priceCents || product.priceCents <= 0) {
+            failed.push({ row: i + 1, error: "Invalid price" });
+            continue;
+          }
+
+          if (!product.images?.length) {
+            failed.push({ row: i + 1, error: "Missing image" });
+            continue;
+          }
+
+          validatedProducts.push(product);
+        } catch (err: any) {
+          failed.push({ row: i + 1, error: err.message || "Validation failed" });
         }
       }
 
-      res.json({ imported: products.length, products });
+      // Bulk insert validated products
+      const created = await storage.bulkCreateProducts(validatedProducts);
+
+      res.json({
+        imported: created.length,
+        failed: failed.length,
+        count: created.length,
+        errors: failed,
+      });
     } catch (error: any) {
-      res.status(400).json({ error: error.message || "CSV import failed" });
+      res.status(500).json({ error: error.message || "CSV import failed" });
     }
   });
 
