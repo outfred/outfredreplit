@@ -668,6 +668,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload merchant logo
+  app.patch("/api/merchants/me/logo", authMiddleware, requireRole("merchant", "admin", "owner"), upload.single("logo"), async (req: AuthRequest, res) => {
+    try {
+      const merchant = await storage.getMerchantByOwner(req.user!.userId);
+      if (!merchant) {
+        return res.status(404).json({ error: "Merchant profile not found" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No logo file uploaded" });
+      }
+
+      const logoUrl = `/uploads/${req.file.filename}`;
+      const updated = await storage.updateMerchant(merchant.id, { logoUrl });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to upload merchant logo" });
+    }
+  });
+
+  // Get merchant by ID (public endpoint for store pages)
+  app.get("/api/merchants/:id", async (req, res) => {
+    try {
+      const merchant = await storage.getMerchantById(req.params.id);
+      if (!merchant || merchant.status !== "active") {
+        return res.status(404).json({ error: "Merchant not found" });
+      }
+      
+      // Return only public merchant information (only for active merchants)
+      const publicMerchant = {
+        id: merchant.id,
+        name: merchant.name,
+        city: merchant.city,
+        contact: merchant.contact,
+        logoUrl: merchant.logoUrl,
+        bannerUrl: merchant.bannerUrl,
+        socials: merchant.socials,
+      };
+      
+      res.json(publicMerchant);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to fetch merchant" });
+    }
+  });
+
   // Get merchant products
   app.get("/api/merchant/products", authMiddleware, requireRole("merchant", "admin", "owner"), async (req: AuthRequest, res) => {
     try {

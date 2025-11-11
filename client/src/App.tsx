@@ -21,6 +21,7 @@ import OutfitBuilder from "@/pages/OutfitBuilder";
 import Profile from "@/pages/Profile";
 import MerchantDashboard from "@/pages/merchant/MerchantDashboard";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import MerchantStore from "@/pages/MerchantStore";
 import NotFound from "@/pages/not-found";
 import StaticPage from "@/pages/StaticPage";
 
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/search" component={Search} />
       <Route path="/brands" component={Brands} />
       <Route path="/brand/:id" component={BrandDetails} />
+      <Route path="/store/:id" component={MerchantStore} />
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/pages/:slug" component={StaticPage} />
       <Route path="/outfit-builder">

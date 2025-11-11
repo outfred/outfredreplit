@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -7,6 +7,9 @@ import { GlowButton } from "@/components/ui/glow-button";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import type { Product } from "@shared/schema";
 import {
   Package,
@@ -23,6 +26,8 @@ import {
   Trash2,
   Save,
   Download,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import {
   Table,
@@ -44,11 +49,42 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+// Zod schemas for settings form
+const storeSettingsSchema = z.object({
+  name: z.string().min(1, "Store name is required"),
+  city: z.string().min(1, "City is required"),
+  contact: z.string().optional().or(z.literal("")),
+  socials: z.object({
+    instagram: z.string().url().or(z.literal("")).optional(),
+    facebook: z.string().url().or(z.literal("")).optional(),
+    twitter: z.string().url().or(z.literal("")).optional(),
+    tiktok: z.string().url().or(z.literal("")).optional(),
+    youtube: z.string().url().or(z.literal("")).optional(),
+    linkedin: z.string().url().or(z.literal("")).optional(),
+    website: z.string().url().or(z.literal("")).optional(),
+  }).optional(),
+});
+
+type StoreSettingsForm = z.infer<typeof storeSettingsSchema>;
 
 export default function MerchantDashboard() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<"products" | "import" | "analytics" | "settings">("products");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
 
   // State for forms
   const [storeName, setStoreName] = useState("");
@@ -101,18 +137,66 @@ export default function MerchantDashboard() {
   });
 
   // Fetch merchant profile (always load for imports and settings)
-  const { data: merchantProfile } = useQuery<{ id: string; name: string; city: string; contact: string }>({
+  const { data: merchantProfile } = useQuery<{ 
+    id: string; 
+    name: string; 
+    city: string; 
+    contact?: string;
+    logoUrl?: string;
+    socials?: {
+      instagram?: string;
+      facebook?: string;
+      twitter?: string;
+      tiktok?: string;
+      youtube?: string;
+      linkedin?: string;
+      website?: string;
+    };
+  }>({
     queryKey: ["/api/merchants/me"],
   });
 
-  // Update form when profile loads (useEffect to avoid setState during render)
+  // Initialize form with merchant profile data
+  const form = useForm<StoreSettingsForm>({
+    resolver: zodResolver(storeSettingsSchema),
+    defaultValues: {
+      name: "",
+      city: "",
+      contact: "",
+      socials: {
+        instagram: "",
+        facebook: "",
+        twitter: "",
+        tiktok: "",
+        youtube: "",
+        linkedin: "",
+        website: "",
+      },
+    },
+  });
+
+  // Update form when profile loads
   useEffect(() => {
-    if (merchantProfile && activeView === "settings") {
+    if (merchantProfile) {
+      form.reset({
+        name: merchantProfile.name || "",
+        city: merchantProfile.city || "",
+        contact: merchantProfile.contact || "",
+        socials: {
+          instagram: merchantProfile.socials?.instagram || "",
+          facebook: merchantProfile.socials?.facebook || "",
+          twitter: merchantProfile.socials?.twitter || "",
+          tiktok: merchantProfile.socials?.tiktok || "",
+          youtube: merchantProfile.socials?.youtube || "",
+          linkedin: merchantProfile.socials?.linkedin || "",
+          website: merchantProfile.socials?.website || "",
+        },
+      });
       setStoreName(merchantProfile.name || "");
       setStoreCity(merchantProfile.city || "");
       setStoreContact(merchantProfile.contact || "");
     }
-  }, [merchantProfile, activeView]);
+  }, [merchantProfile, form]);
 
   // Delete product mutation
   const deleteMutation = useMutation({
@@ -135,17 +219,100 @@ export default function MerchantDashboard() {
 
   // Update merchant profile mutation
   const updateMerchantMutation = useMutation({
-    mutationFn: async (data: { name: string; city: string; contact: string }) => {
+    mutationFn: async (data: StoreSettingsForm) => {
       return await apiRequest("PATCH", "/api/merchants/me", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/merchants/me"] });
-      toast({ title: "Store settings updated successfully" });
+      toast({ 
+        title: language === "ar" ? "تم تحديث إعدادات المتجر بنجاح" : "Store settings updated successfully" 
+      });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to update settings", variant: "destructive" });
+      toast({ 
+        title: language === "ar" ? "خطأ" : "Error", 
+        description: language === "ar" ? "فشل تحديث الإعدادات" : "Failed to update settings", 
+        variant: "destructive" 
+      });
     },
   });
+
+  // Upload merchant logo mutation
+  const uploadLogoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("logo", file);
+      const response = await fetch("/api/merchants/me/logo", {
+        method: "PATCH",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Logo upload failed");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/merchants/me"] });
+      setSelectedLogoFile(null);
+      setLogoPreview(null);
+      toast({ 
+        title: language === "ar" ? "تم رفع الشعار بنجاح" : "Logo uploaded successfully" 
+      });
+    },
+    onError: () => {
+      toast({ 
+        title: language === "ar" ? "خطأ" : "Error", 
+        description: language === "ar" ? "فشل رفع الشعار" : "Failed to upload logo", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Remove merchant logo mutation
+  const removeLogoMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("PATCH", "/api/merchants/me", { logoUrl: null });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/merchants/me"] });
+      setLogoPreview(null);
+      setSelectedLogoFile(null);
+      toast({ 
+        title: language === "ar" ? "تم حذف الشعار بنجاح" : "Logo removed successfully" 
+      });
+    },
+    onError: () => {
+      toast({ 
+        title: language === "ar" ? "خطأ" : "Error", 
+        description: language === "ar" ? "فشل حذف الشعار" : "Failed to remove logo", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Handle logo file selection
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedLogoFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle logo upload
+  const handleLogoUpload = () => {
+    if (selectedLogoFile) {
+      uploadLogoMutation.mutate(selectedLogoFile);
+    }
+  };
+
+  // Handle settings form submission
+  const onSubmitSettings = (data: StoreSettingsForm) => {
+    updateMerchantMutation.mutate(data);
+  };
 
   // CSV import mutation
   const importCsvMutation = useMutation({
@@ -806,57 +973,331 @@ export default function MerchantDashboard() {
         {/* Settings View */}
         {activeView === "settings" && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">{t("storeSettings")}</h2>
-            <GlassCard className="p-6 max-w-2xl">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">Store Name</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    placeholder="Your store name"
-                    data-testid="input-store-name"
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                  />
+            <h2 className="text-2xl font-bold mb-6">
+              {language === "ar" ? "إعدادات المتجر" : "Store Settings"}
+            </h2>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmitSettings)} className="space-y-6">
+                {/* Two-column layout for cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* Card 1: Store Details + Logo */}
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">
+                      {language === "ar" ? "معلومات المتجر" : "Store Information"}
+                    </h3>
+                    
+                    {/* Logo Upload Section */}
+                    <div className="mb-6">
+                      <Label className="mb-2 block">
+                        {language === "ar" ? "شعار المتجر" : "Store Logo"}
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-20 h-20">
+                          <AvatarImage 
+                            src={logoPreview || merchantProfile?.logoUrl || ""} 
+                            alt="Store logo" 
+                          />
+                          <AvatarFallback className="bg-primary/10">
+                            <ImagePlus className="w-8 h-8 text-primary" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col gap-2">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleLogoSelect}
+                            data-testid="input-logo-file"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            data-testid="button-select-logo"
+                          >
+                            <Upload className="w-4 h-4 me-2" />
+                            {language === "ar" ? "اختر شعار" : "Select Logo"}
+                          </Button>
+                          {selectedLogoFile && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleLogoUpload}
+                              disabled={uploadLogoMutation.isPending}
+                              data-testid="button-upload-logo"
+                            >
+                              {uploadLogoMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin me-2" />
+                              ) : (
+                                <Save className="w-4 h-4 me-2" />
+                              )}
+                              {uploadLogoMutation.isPending 
+                                ? (language === "ar" ? "جاري الرفع..." : "Uploading...")
+                                : (language === "ar" ? "رفع الشعار" : "Upload Logo")
+                              }
+                            </Button>
+                          )}
+                          {(merchantProfile?.logoUrl || logoPreview) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeLogoMutation.mutate()}
+                              disabled={removeLogoMutation.isPending}
+                              data-testid="button-remove-logo"
+                            >
+                              <X className="w-4 h-4 me-2" />
+                              {language === "ar" ? "حذف الشعار" : "Remove Logo"}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Store Name */}
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <FormLabel>
+                            {language === "ar" ? "اسم المتجر" : "Store Name"}
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder={language === "ar" ? "اسم متجرك" : "Your store name"}
+                              data-testid="input-store-name"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* City */}
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <FormLabel>
+                            {language === "ar" ? "المدينة" : "City"}
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder={language === "ar" ? "القاهرة" : "Cairo"}
+                              data-testid="input-city"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Contact */}
+                    <FormField
+                      control={form.control}
+                      name="contact"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {language === "ar" ? "معلومات الاتصال" : "Contact"}
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="contact@store.com"
+                              data-testid="input-contact"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </GlassCard>
+
+                  {/* Card 2: Social Links */}
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">
+                      {language === "ar" ? "روابط التواصل الاجتماعي" : "Social Media Links"}
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {/* Instagram */}
+                      <FormField
+                        control={form.control}
+                        name="socials.instagram"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {language === "ar" ? "إنستجرام" : "Instagram"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="https://instagram.com/yourstore"
+                                data-testid="input-instagram"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Facebook */}
+                      <FormField
+                        control={form.control}
+                        name="socials.facebook"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {language === "ar" ? "فيسبوك" : "Facebook"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="https://facebook.com/yourstore"
+                                data-testid="input-facebook"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Twitter */}
+                      <FormField
+                        control={form.control}
+                        name="socials.twitter"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {language === "ar" ? "تويتر" : "Twitter"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="https://twitter.com/yourstore"
+                                data-testid="input-twitter"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* TikTok */}
+                      <FormField
+                        control={form.control}
+                        name="socials.tiktok"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {language === "ar" ? "تيك توك" : "TikTok"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="https://tiktok.com/@yourstore"
+                                data-testid="input-tiktok"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* YouTube */}
+                      <FormField
+                        control={form.control}
+                        name="socials.youtube"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {language === "ar" ? "يوتيوب" : "YouTube"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="https://youtube.com/@yourstore"
+                                data-testid="input-youtube"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* LinkedIn */}
+                      <FormField
+                        control={form.control}
+                        name="socials.linkedin"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {language === "ar" ? "لينكد إن" : "LinkedIn"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="https://linkedin.com/company/yourstore"
+                                data-testid="input-linkedin"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Website */}
+                      <FormField
+                        control={form.control}
+                        name="socials.website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {language === "ar" ? "الموقع الإلكتروني" : "Website"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="https://yourwebsite.com"
+                                data-testid="input-website"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </GlassCard>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">City</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    placeholder="Cairo"
-                    data-testid="input-city"
-                    value={storeCity}
-                    onChange={(e) => setStoreCity(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold">Contact</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    placeholder="contact@store.com"
-                    data-testid="input-contact"
-                    value={storeContact}
-                    onChange={(e) => setStoreContact(e.target.value)}
-                  />
-                </div>
+
+                {/* Save Button */}
                 <Button 
-                  className="w-full" 
+                  type="submit" 
+                  className="w-full lg:w-auto" 
                   data-testid="button-save-store-settings"
-                  onClick={() => updateMerchantMutation.mutate({ 
-                    name: storeName, 
-                    city: storeCity, 
-                    contact: storeContact 
-                  })}
                   disabled={updateMerchantMutation.isPending}
                 >
-                  {updateMerchantMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
-                  {updateMerchantMutation.isPending ? "Saving..." : t("save")}
+                  {updateMerchantMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin me-2" />
+                  ) : (
+                    <Save className="w-4 h-4 me-2" />
+                  )}
+                  {updateMerchantMutation.isPending 
+                    ? (language === "ar" ? "جاري الحفظ..." : "Saving...") 
+                    : (language === "ar" ? "حفظ الإعدادات" : "Save Settings")
+                  }
                 </Button>
-              </div>
-            </GlassCard>
+              </form>
+            </Form>
           </div>
         )}
 
