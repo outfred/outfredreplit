@@ -10,6 +10,7 @@ import {
   indexingJobs,
   navLinks,
   footerConfig,
+  staticPages,
   type User,
   type InsertUser,
   type Merchant,
@@ -31,6 +32,8 @@ import {
   type NavLink,
   type InsertNavLink,
   type FooterConfig,
+  type StaticPage,
+  type InsertStaticPage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, like, sql, inArray } from "drizzle-orm";
@@ -117,6 +120,13 @@ export interface IStorage {
   // Footer Config
   getFooterConfig(): Promise<FooterConfig | undefined>;
   updateFooterConfig(updates: Partial<FooterConfig>): Promise<FooterConfig>;
+
+  // Static Pages
+  getStaticPage(slug: string): Promise<StaticPage | undefined>;
+  listStaticPages(publishedOnly?: boolean): Promise<StaticPage[]>;
+  createStaticPage(page: InsertStaticPage): Promise<StaticPage>;
+  updateStaticPage(id: string, updates: Partial<StaticPage>): Promise<StaticPage>;
+  deleteStaticPage(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -172,7 +182,7 @@ export class DatabaseStorage implements IStorage {
   async createMerchant(merchant: InsertMerchant): Promise<Merchant> {
     const [created] = await db
       .insert(merchants)
-      .values(merchant)
+      .values([merchant as any])
       .returning();
     return created;
   }
@@ -210,7 +220,7 @@ export class DatabaseStorage implements IStorage {
   async createBrand(brand: InsertBrand): Promise<Brand> {
     const [created] = await db
       .insert(brands)
-      .values(brand)
+      .values([brand as any])
       .returning();
     return created;
   }
@@ -243,7 +253,7 @@ export class DatabaseStorage implements IStorage {
   async createProduct(product: InsertProduct): Promise<Product> {
     const [created] = await db
       .insert(products)
-      .values(product)
+      .values([product as any])
       .returning();
     return created;
   }
@@ -253,7 +263,7 @@ export class DatabaseStorage implements IStorage {
     
     const created = await db
       .insert(products)
-      .values(productsToCreate)
+      .values(productsToCreate as any)
       .returning();
     return created;
   }
@@ -377,7 +387,7 @@ export class DatabaseStorage implements IStorage {
   async createOutfit(outfit: InsertOutfit): Promise<Outfit> {
     const [created] = await db
       .insert(outfits)
-      .values(outfit)
+      .values([outfit as any])
       .returning();
     return created;
   }
@@ -573,6 +583,43 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  // Static Pages
+  async getStaticPage(slug: string): Promise<StaticPage | undefined> {
+    const [page] = await db.select().from(staticPages).where(eq(staticPages.slug, slug));
+    return page || undefined;
+  }
+
+  async listStaticPages(publishedOnly = false): Promise<StaticPage[]> {
+    if (publishedOnly) {
+      return await db.select().from(staticPages)
+        .where(eq(staticPages.isPublished, true))
+        .orderBy(asc(staticPages.slug));
+    }
+    return await db.select().from(staticPages).orderBy(asc(staticPages.slug));
+  }
+
+  async createStaticPage(page: InsertStaticPage): Promise<StaticPage> {
+    const [created] = await db
+      .insert(staticPages)
+      .values([page])
+      .returning();
+    return created;
+  }
+
+  async updateStaticPage(id: string, updates: Partial<StaticPage>): Promise<StaticPage> {
+    const { id: _, ...safeUpdates } = updates as any;
+    const [updated] = await db
+      .update(staticPages)
+      .set({ ...safeUpdates, updatedAt: new Date() })
+      .where(eq(staticPages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteStaticPage(id: string): Promise<void> {
+    await db.delete(staticPages).where(eq(staticPages.id, id));
   }
 }
 

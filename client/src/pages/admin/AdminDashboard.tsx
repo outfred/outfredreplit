@@ -51,6 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import StaticPagesView from "./StaticPagesView";
 
 // Merchant form schema
 const merchantFormSchema = insertMerchantSchema.extend({
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [activeView, setActiveView] = useState<
-    "users" | "merchants" | "products" | "brands" | "navigation" | "footer" | "ai" | "metrics" | "config"
+    "users" | "merchants" | "products" | "brands" | "navigation" | "footer" | "pages" | "ai" | "metrics" | "config"
   >("users");
   
   // Merchant Dialog State
@@ -334,6 +335,15 @@ export default function AdminDashboard() {
           >
             <FileText className="w-4 h-4 me-2" />
             Footer
+          </Button>
+          <Button
+            variant={activeView === "pages" ? "default" : "ghost"}
+            onClick={() => setActiveView("pages")}
+            className="rounded-xl whitespace-nowrap"
+            data-testid="button-nav-pages"
+          >
+            <FileText className="w-4 h-4 me-2" />
+            Static Pages
           </Button>
           <Button
             variant={activeView === "ai" ? "default" : "ghost"}
@@ -846,6 +856,9 @@ export default function AdminDashboard() {
 
         {/* Footer Config View */}
         {activeView === "footer" && <FooterConfigView />}
+
+        {/* Static Pages View */}
+        {activeView === "pages" && <StaticPagesView />}
 
         {/* Configuration View */}
         {activeView === "config" && (

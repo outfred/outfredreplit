@@ -109,18 +109,18 @@ export async function seedDatabase() {
     // Create brands
     console.log("Creating brands...");
     const brandData = [
-      { name: "Cairo Streetwear", city: "Cairo" },
-      { name: "Alexandria Fashion", city: "Alexandria" },
-      { name: "Giza Style", city: "Giza" },
-      { name: "Luxor Boutique", city: "Luxor" },
-      { name: "Aswan Collection", city: "Aswan" },
+      { nameEn: "Cairo Streetwear", nameAr: "أزياء القاهرة" },
+      { nameEn: "Alexandria Fashion", nameAr: "موضة الإسكندرية" },
+      { nameEn: "Giza Style", nameAr: "ستايل الجيزة" },
+      { nameEn: "Luxor Boutique", nameAr: "بوتيك الأقصر" },
+      { nameEn: "Aswan Collection", nameAr: "كوليكشن أسوان" },
     ];
 
     const brands: any = {};
     for (const brand of brandData) {
       const created = await storage.createBrand(brand);
-      brands[brand.name] = created;
-      console.log(`✅ Brand created: ${brand.name}`);
+      brands[brand.nameEn] = created;
+      console.log(`✅ Brand created: ${brand.nameEn}`);
     }
 
     // Create merchants

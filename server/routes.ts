@@ -8,7 +8,7 @@ import { authMiddleware, requireRole, type AuthRequest } from "./middleware/auth
 import { createEmbeddingProvider, spellCorrector } from "./lib/ai-providers";
 import { metricsMiddleware } from "./lib/metrics";
 import { z } from "zod";
-import { insertUserSchema, insertMerchantSchema, insertBrandSchema, insertProductSchema, insertOutfitSchema, insertNavLinkSchema } from "@shared/schema";
+import { insertUserSchema, insertMerchantSchema, insertBrandSchema, insertProductSchema, insertOutfitSchema, insertNavLinkSchema, insertStaticPageSchema } from "@shared/schema";
 import path from "path";
 import { fileURLToPath } from "url";
 import { mkdirSync } from "fs";
@@ -1171,6 +1171,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(config);
     } catch (error: any) {
       res.status(400).json({ error: error.message || "Failed to update footer config" });
+    }
+  });
+
+  // ===== STATIC PAGES ROUTES =====
+
+  // Get static page by slug (public, published only)
+  app.get("/api/pages/:slug", async (req, res) => {
+    const page = await storage.getStaticPage(req.params.slug);
+    if (!page || !page.isPublished) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+    res.json(page);
+  });
+
+  // List published static pages (public)
+  app.get("/api/pages", async (req, res) => {
+    const pages = await storage.listStaticPages(true);
+    res.json(pages);
+  });
+
+  // Admin: List all static pages
+  app.get("/api/admin/pages", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    const pages = await storage.listStaticPages(false);
+    res.json(pages);
+  });
+
+  // Admin: Create static page
+  app.post("/api/admin/pages", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const pageData = insertStaticPageSchema.parse(req.body);
+      const page = await storage.createStaticPage(pageData);
+      res.json(page);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to create page" });
+    }
+  });
+
+  // Admin: Update static page
+  app.patch("/api/admin/pages/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      const updates = req.body;
+      const page = await storage.updateStaticPage(req.params.id, updates);
+      res.json(page);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to update page" });
+    }
+  });
+
+  // Admin: Delete static page
+  app.delete("/api/admin/pages/:id", authMiddleware, requireRole("admin", "owner"), async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteStaticPage(req.params.id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Failed to delete page" });
     }
   });
 

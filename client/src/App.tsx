@@ -22,6 +22,7 @@ import Profile from "@/pages/Profile";
 import MerchantDashboard from "@/pages/merchant/MerchantDashboard";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import NotFound from "@/pages/not-found";
+import StaticPage from "@/pages/StaticPage";
 
 function Router() {
   return (
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/brands" component={Brands} />
       <Route path="/brand/:id" component={BrandDetails} />
       <Route path="/product/:id" component={ProductPage} />
+      <Route path="/pages/:slug" component={StaticPage} />
       <Route path="/outfit-builder">
         {() => (
           <ProtectedRoute>

@@ -103,22 +103,34 @@
   - Admin Dashboard: Footer tab added with FileText icon
   - Bug Fix: MerchantDialog infinite loop resolved (useEffect wrapper for form.reset)
   - Architect Review: PASS - Bilingual schema, secure endpoints, LanguageContext integration, query invalidation correct
+- ✅ **Static Pages CMS** (Task 10) - **ARCHITECTURALLY COMPLETE**:
+  - Database Schema: staticPages table (slug, titleEn, titleAr, contentEn, contentAr, metaDescriptionEn/Ar, isPublished)
+  - Backend: Storage methods + split routes (public `/api/pages/:slug` + admin `/api/admin/pages` CRUD)
+  - Frontend: StaticPage.tsx (public view with SEO), StaticPagesView.tsx (admin CRUD with TinyMCE)
+  - AdminDashboard: Static Pages tab integrated (button + conditional render)
+  - Security: Public/admin routes separated, admin sees all pages (including drafts), public sees published only
+  - Critical fixes applied: Auth schema restored, query bug fixed, import/export mismatch fixed (5 architect iterations)
+  - Architect Review: **PASS** - Implementation architecturally sound
+  - **E2E Test Status**: ❌ **BLOCKED** by pre-existing auth bug (tokens saved but /admin redirects to /login)
+  - **Known Auth Regression**: Login succeeds, tokens stored, but AuthContext fails to read localStorage on init → protected routes redirect to /login
+  - **Next Action**: Create separate task to debug AuthContext initialization (outside Task 10 scope)
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
-- **Database**: Schema updated with bilingual CMS tables (nav_links, footer_config) ✅  
-- **Frontend**: Home, Product, Admin, OutfitBuilder pages integrated with real data ✅
-- **Backend**: All API routes implemented, registerRoutes hot-reload safe ✅
-- **Authentication**: Complete with protected routes and RBAC ✅
+- **Database**: Schema updated with static_pages table + bilingual CMS tables ✅  
+- **Frontend**: Home, Product, Admin, OutfitBuilder, StaticPage pages integrated ✅
+- **Backend**: All API routes implemented (public + admin static pages) ✅
+- **Authentication**: ⚠️ **REGRESSION** - Login succeeds but /admin redirects to /login (AuthContext init bug)
 - **AI**: Migrated to Gemini API (text/image embeddings, outfit suggestions) ✅
 - **Outfit Builder**: Complete with AI form, Gemini integration, product display ✅
-- **Navigation CMS**: Navbar reads from DB with bilingual support (En/Ar), Admin tab exists ✅
+- **Navigation CMS**: Navbar reads from DB with bilingual support (En/Ar) ✅
 - **Footer CMS**: Bilingual footer with admin controls (En/Ar copyright + social links) ✅
-- **Integration Progress**: 9/11 tasks completed (Tasks 1-9)
+- **Static Pages CMS**: Backend/frontend complete, admin tab integrated ✅ (e2e blocked by auth bug)
+- **Integration Progress**: 10/11 tasks completed (Tasks 1-10)
 
-## Next Steps (Task 10+)
-1. **Header Navigation CRUD UI** (Enhancement): Build full admin CRUD interface for navigation links (create/edit/delete/reorder) - currently placeholder
-2. **Static Pages** (Task 10): Privacy Policy + Contact Us with WYSIWYG editor
+## Next Steps (Task 11+)
+1. **URGENT - Auth Bug Fix**: Debug AuthContext initialization (tokens saved but not read on app bootstrap → /admin redirects to /login)
+2. **Header Navigation CRUD UI** (Enhancement): Build full admin CRUD interface for navigation links (create/edit/delete/reorder) - currently placeholder
 3. **Logo Upload** (Task 11): Replace "Outfred" text with admin-uploadable logo in header
 
 ## Running the Project
@@ -182,6 +194,7 @@ outfred/
 - **owner**: All admin actions + assign owner role + access sensitive configs
 
 ## Known Issues
+- **CRITICAL - Auth Regression**: Login succeeds (200 response, tokens saved to localStorage) but navigating to /admin redirects to /login. AuthContext fails to read tokens on app init. Server-side auth works (POST /api/auth/refresh returns 200), but client-side state remains unauthenticated. Likely issue in AuthContext bootstrap logic (useEffect dependency or localStorage read timing).
 - BrandBadge component error on Home page (undefined brandName.charAt) - needs null safety fix
 - Image search requires CLIP embedding setup (or use Gemini vision model)
 - Spell correction dictionary needs expansion
