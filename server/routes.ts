@@ -736,7 +736,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/favorites", authMiddleware, async (req: AuthRequest, res) => {
     try {
       const favorites = await storage.listFavoritesByUser(req.user!.userId);
-      res.json(favorites);
+      
+      // Enrich favorites with product details
+      const enrichedFavorites = await Promise.all(
+        favorites.map(async (fav) => {
+          const product = await storage.getProduct(fav.productId);
+          if (!product) return null;
+          
+          // Get brand name if brandId exists
+          let brandName = null;
+          if (product.brandId) {
+            const brand = await storage.getBrand(product.brandId);
+            brandName = brand?.nameEn || null;
+          }
+          
+          return {
+            id: product.id,
+            merchantId: product.merchantId,
+            brandId: product.brandId,
+            brandName,
+            title: product.title,
+            description: product.description,
+            price: product.priceCents / 100,
+            currency: product.currency,
+            colors: product.colors,
+            sizes: product.sizes,
+            fit: product.fit,
+            gender: product.gender,
+            tags: product.tags,
+            images: product.images,
+            published: product.published,
+            views: product.views,
+            clicks: product.clicks,
+            createdAt: product.createdAt.toISOString(),
+            updatedAt: product.updatedAt.toISOString(),
+          };
+        })
+      );
+      
+      // Filter out null values (deleted products)
+      const validFavorites = enrichedFavorites.filter((f) => f !== null);
+      res.json(validFavorites);
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to fetch favorites" });
     }
