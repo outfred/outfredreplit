@@ -51,7 +51,18 @@ export const brands = pgTable("brands", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   nameEn: text("name_en").notNull(),
   nameAr: text("name_ar"),
+  descriptionEn: text("description_en"),
+  descriptionAr: text("description_ar"),
   websiteUrl: text("website_url"),
+  email: text("email"),
+  socials: jsonb("socials").$type<{
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    tiktok?: string;
+    youtube?: string;
+    linkedin?: string;
+  }>(),
   logoUrl: text("logo_url"),
   coverUrl: text("cover_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

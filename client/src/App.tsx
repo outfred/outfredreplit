@@ -14,6 +14,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Search from "@/pages/Search";
 import Brands from "@/pages/Brands";
+import BrandDetails from "@/pages/BrandDetails";
 import ProductPage from "@/pages/ProductPage";
 import OutfitBuilder from "@/pages/OutfitBuilder";
 import Profile from "@/pages/Profile";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/search" component={Search} />
       <Route path="/brands" component={Brands} />
+      <Route path="/brand/:id" component={BrandDetails} />
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/outfit-builder">
         {() => (

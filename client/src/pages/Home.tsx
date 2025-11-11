@@ -61,7 +61,7 @@ export default function Home() {
           </div>
 
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto bg-white dark:bg-background/95 rounded-2xl p-3 shadow-2xl backdrop-blur-xl border border-white/20">
             <SearchBar
               placeholder={t("searchPlaceholder")}
               onSearch={handleSearch}

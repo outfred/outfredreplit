@@ -1,3 +1,4 @@
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -7,6 +8,7 @@ import { ExternalLink, Sparkles } from "lucide-react";
 import type { Brand } from "@shared/schema";
 
 export default function Brands() {
+  const [, setLocation] = useLocation();
   const { t, language } = useLanguage();
 
   const { data: brands = [], isLoading } = useQuery<Brand[]>({
@@ -55,6 +57,7 @@ export default function Brands() {
               <GlassCard
                 key={brand.id}
                 className="p-6 hover:scale-105 transition-transform duration-300 cursor-pointer group"
+                onClick={() => setLocation(`/brand/${brand.id}`)}
                 data-testid={`card-brand-${brand.id}`}
               >
                 {/* Brand Logo */}
