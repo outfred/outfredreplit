@@ -9,6 +9,7 @@ import {
   metrics,
   indexingJobs,
   navLinks,
+  footerConfig,
   type User,
   type InsertUser,
   type Merchant,
@@ -29,6 +30,7 @@ import {
   type IndexingJob,
   type NavLink,
   type InsertNavLink,
+  type FooterConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, like, sql, inArray } from "drizzle-orm";
@@ -111,6 +113,10 @@ export interface IStorage {
   updateNavLink(id: string, updates: Partial<NavLink>): Promise<NavLink>;
   deleteNavLink(id: string): Promise<void>;
   reorderNavLinks(updates: { id: string; order: number }[]): Promise<void>;
+
+  // Footer Config
+  getFooterConfig(): Promise<FooterConfig | undefined>;
+  updateFooterConfig(updates: Partial<FooterConfig>): Promise<FooterConfig>;
 }
 
 export class DatabaseStorage implements IStorage {
