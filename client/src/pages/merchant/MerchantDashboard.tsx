@@ -299,19 +299,24 @@ export default function MerchantDashboard() {
           
           // Skip products without valid images
           if (validImages.length === 0) {
+            console.log(`Skipping product "${product.title}" - no valid images`);
             failCount++;
             continue;
           }
           
-          await apiRequest("POST", "/api/products", {
+          const payload = {
             title: product.title || 'Untitled',
             description: product.description || '',
             priceCents: Math.round((product.price || 0) * 100),
             images: validImages,
             published: true,
-          });
+          };
+          
+          console.log('Sending product:', payload);
+          await apiRequest("POST", "/api/products", payload);
           successCount++;
-        } catch (err) {
+        } catch (err: any) {
+          console.error(`Failed to import "${product.title}":`, err?.message || err);
           failCount++;
         }
       }
