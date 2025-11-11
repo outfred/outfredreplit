@@ -38,6 +38,7 @@ export function Navbar() {
   const fallbackLinks = [
     { path: "/", labelEn: "Home", labelAr: "الرئيسية", isExternal: false },
     { path: "/search", labelEn: "Search", labelAr: "البحث", isExternal: false },
+    { path: "/brands", labelEn: "Brands", labelAr: "العلامات التجارية", isExternal: false },
     { path: "/outfit-builder", labelEn: "Outfit Builder", labelAr: "مصمم الأزياء", isExternal: false },
   ];
 

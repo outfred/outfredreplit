@@ -27,9 +27,9 @@ export default function Profile() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("favorites");
 
-  // Fetch user's favorites from API
+  // Fetch user's favorites from API (cache isolated by user ID)
   const { data: favorites = [], isLoading: favoritesLoading } = useQuery<ProductSummary[]>({
-    queryKey: ["/api/favorites"],
+    queryKey: ["/api/favorites", user?.id],
     enabled: !!user,
   });
 
