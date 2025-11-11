@@ -52,6 +52,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import StaticPagesView from "./StaticPagesView";
+import { NavigationLinksView } from "./NavigationLinksView";
 
 // Merchant form schema
 const merchantFormSchema = insertMerchantSchema.extend({
@@ -861,20 +862,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Navigation View */}
-        {activeView === "navigation" && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Navigation Management</h2>
-              <GlowButton variant="primary" data-testid="button-add-nav-link">
-                <Plus className="w-4 h-4 me-2" />
-                Add Link
-              </GlowButton>
-            </div>
-            <GlassCard className="overflow-hidden">
-              <p className="p-6 text-muted-foreground">Navigation CMS UI - Coming soon</p>
-            </GlassCard>
-          </div>
-        )}
+        {activeView === "navigation" && <NavigationLinksView />}
 
         {/* Footer Config View */}
         {activeView === "footer" && <FooterConfigView />}
