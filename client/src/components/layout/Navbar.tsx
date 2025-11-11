@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 import { Moon, Sun, User, Menu, X, Languages, LogOut, LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+type NavLink = {
+  id: string;
+  labelEn: string;
+  labelAr: string;
+  path: string;
+  isExternal: boolean;
+};
+
 export function Navbar() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
@@ -22,11 +31,17 @@ export function Navbar() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [
-    { path: "/", label: t("home") },
-    { path: "/search", label: t("search") },
-    { path: "/outfit-builder", label: t("outfitBuilder") },
+  const { data: dbNavLinks = [] } = useQuery<NavLink[]>({
+    queryKey: ["/api/nav-links"],
+  });
+
+  const fallbackLinks = [
+    { path: "/", labelEn: "Home", labelAr: "الرئيسية", isExternal: false },
+    { path: "/search", labelEn: "Search", labelAr: "البحث", isExternal: false },
+    { path: "/outfit-builder", labelEn: "Outfit Builder", labelAr: "مصمم الأزياء", isExternal: false },
   ];
+
+  const navLinks = dbNavLinks.length > 0 ? dbNavLinks : fallbackLinks;
 
   const isActive = (path: string) => location === path;
 
@@ -58,7 +73,7 @@ export function Navbar() {
                   )}
                   data-testid={`link-${link.path.slice(1) || "home"}`}
                 >
-                  {link.label}
+                  {language === "ar" ? link.labelAr : link.labelEn}
                 </Button>
               </Link>
             ))}
@@ -199,7 +214,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     data-testid={`mobile-link-${link.path.slice(1) || "home"}`}
                   >
-                    {link.label}
+                    {language === "ar" ? link.labelAr : link.labelEn}
                   </Button>
                 </Link>
               ))}

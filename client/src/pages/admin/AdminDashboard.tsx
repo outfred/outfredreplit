@@ -317,6 +317,15 @@ export default function AdminDashboard() {
             {t("brands")}
           </Button>
           <Button
+            variant={activeView === "navigation" ? "default" : "ghost"}
+            onClick={() => setActiveView("navigation")}
+            className="rounded-xl whitespace-nowrap"
+            data-testid="button-nav-navigation"
+          >
+            <BookOpen className="w-4 h-4 me-2" />
+            Navigation
+          </Button>
+          <Button
             variant={activeView === "ai" ? "default" : "ghost"}
             onClick={() => setActiveView("ai")}
             className="rounded-xl whitespace-nowrap"
@@ -806,6 +815,22 @@ export default function AdminDashboard() {
                 </Badge>
               </GlassCard>
             </div>
+          </div>
+        )}
+
+        {/* Navigation View */}
+        {activeView === "navigation" && (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Navigation Management</h2>
+              <GlowButton variant="primary" data-testid="button-add-nav-link">
+                <Plus className="w-4 h-4 me-2" />
+                Add Link
+              </GlowButton>
+            </div>
+            <GlassCard className="overflow-hidden">
+              <p className="p-6 text-muted-foreground">Navigation CMS UI - Coming soon</p>
+            </GlassCard>
           </div>
         )}
 
