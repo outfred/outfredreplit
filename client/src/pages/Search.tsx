@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect, useMemo } from "react";
+import { useLocation, useSearch } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SearchBar } from "@/components/ui/search-bar";
 import { ProductTile } from "@/components/ui/product-tile";
@@ -9,24 +10,119 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Search as SearchIcon, SlidersHorizontal, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search as SearchIcon, SlidersHorizontal, X, Upload } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import type { ProductSummary } from "@shared/schema";
+
+interface SearchFilters {
+  sizes?: string[];
+  colors?: string[];
+  priceMin?: number;
+  priceMax?: number;
+  cities?: string[];
+  brands?: string[];
+}
+
+interface SearchResponse {
+  results: ProductSummary[];
+  count: number;
+}
 
 export default function Search() {
   const { t } = useLanguage();
   const [location, setLocation] = useLocation();
+  const search = useSearch();
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedFits, setSelectedFits] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<ProductSummary[]>([]);
 
-  const query = new URLSearchParams(location.split("?")[1]).get("q") || "";
+  const initialQuery = useMemo(() => new URLSearchParams(search).get("q") ?? "", [search]);
+  const [query, setQuery] = useState(initialQuery);
 
-  // Mock data
-  const products = query ? [] : []; // Empty for now
+  // Sync query with URL parameter when search string changes
+  useEffect(() => {
+    const urlQuery = new URLSearchParams(search).get("q") || "";
+    setQuery(urlQuery);
+  }, [search]);
 
-  const filters = {
+  // Text search mutation
+  const textSearch = useMutation<SearchResponse, Error, { q: string; filters?: SearchFilters }>({
+    mutationFn: async ({ q, filters }) => {
+      const res = await apiRequest("POST", "/api/search/text", { q, filters });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setSearchResults(data.results);
+    },
+  });
+
+  // Image search mutation
+  const imageSearch = useMutation<SearchResponse, Error, File>({
+    mutationFn: async (file) => {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/search/image", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Image search failed");
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setSearchResults(data.results);
+    },
+  });
+
+  // Execute text search when query or filters change
+  useEffect(() => {
+    console.log("[Search] useEffect triggered", { query, priceRange, selectedSizes, selectedColors });
+    if (query) {
+      const filters: SearchFilters = {
+        priceMin: priceRange[0],
+        priceMax: priceRange[1],
+        sizes: selectedSizes.length > 0 ? selectedSizes : undefined,
+        colors: selectedColors.length > 0 ? selectedColors : undefined,
+      };
+      console.log("[Search] Executing search with", { q: query, filters });
+      textSearch.mutate({ q: query, filters });
+    } else {
+      setSearchResults([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, priceRange[0], priceRange[1], selectedSizes.length, selectedColors.length]);
+
+  const products = searchResults;
+  const isLoading = textSearch.isPending || imageSearch.isPending;
+
+  console.log("[Search] Render - products:", products.length, "isLoading:", isLoading);
+
+  const filterOptions = {
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    colors: ["Black", "White", "Blue", "Red", "Green"],
+    colors: ["Black", "White", "Navy", "Gray", "Beige", "Brown", "Red", "Green"],
     fits: ["Slim", "Regular", "Relaxed", "Oversized"],
-    cities: ["Cairo", "Alexandria", "Giza", "Aswan"],
+  };
+
+  const handleSizeToggle = (size: string) => {
+    setSelectedSizes((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
+  };
+
+  const handleColorToggle = (color: string) => {
+    setSelectedColors((prev) =>
+      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
+    );
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      imageSearch.mutate(file);
+    }
   };
 
   return (
@@ -35,6 +131,7 @@ export default function Search() {
         {/* Search Bar */}
         <div className="mb-8">
           <SearchBar
+            key={query}
             placeholder={t("searchPlaceholder")}
             defaultValue={query}
             onSearch={(q) => setLocation(`/search?q=${encodeURIComponent(q)}`)}
@@ -76,13 +173,37 @@ export default function Search() {
                 </div>
               </div>
 
+              {/* Image Search */}
+              <div className="space-y-3">
+                <Label>{t("imageSearch") || "Search by Image"}</Label>
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  <div className="border-2 border-dashed border-muted-foreground/20 rounded-xl p-4 hover:border-primary/50 transition-colors text-center">
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Upload image</p>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      data-testid="input-image-upload"
+                    />
+                  </div>
+                </label>
+              </div>
+
               {/* Size Filter */}
               <div className="space-y-3">
                 <Label>{t("size")}</Label>
                 <div className="space-y-2">
-                  {filters.sizes.map((size) => (
+                  {filterOptions.sizes.map((size) => (
                     <div key={size} className="flex items-center space-x-2">
-                      <Checkbox id={`size-${size}`} data-testid={`checkbox-size-${size}`} />
+                      <Checkbox
+                        id={`size-${size}`}
+                        checked={selectedSizes.includes(size)}
+                        onCheckedChange={() => handleSizeToggle(size)}
+                        data-testid={`checkbox-size-${size}`}
+                      />
                       <label
                         htmlFor={`size-${size}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
@@ -98,9 +219,14 @@ export default function Search() {
               <div className="space-y-3">
                 <Label>{t("color")}</Label>
                 <div className="space-y-2">
-                  {filters.colors.map((color) => (
+                  {filterOptions.colors.map((color) => (
                     <div key={color} className="flex items-center space-x-2">
-                      <Checkbox id={`color-${color}`} data-testid={`checkbox-color-${color}`} />
+                      <Checkbox
+                        id={`color-${color}`}
+                        checked={selectedColors.includes(color)}
+                        onCheckedChange={() => handleColorToggle(color)}
+                        data-testid={`checkbox-color-${color}`}
+                      />
                       <label
                         htmlFor={`color-${color}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
@@ -112,30 +238,17 @@ export default function Search() {
                 </div>
               </div>
 
-              {/* Fit Filter */}
-              <div className="space-y-3">
-                <Label>{t("fit")}</Label>
-                <div className="space-y-2">
-                  {filters.fits.map((fit) => (
-                    <div key={fit} className="flex items-center space-x-2">
-                      <Checkbox id={`fit-${fit}`} data-testid={`checkbox-fit-${fit}`} />
-                      <label
-                        htmlFor={`fit-${fit}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {fit}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <Button
                 variant="outline"
                 className="w-full"
+                onClick={() => {
+                  setSelectedSizes([]);
+                  setSelectedColors([]);
+                  setPriceRange([0, 5000]);
+                }}
                 data-testid="button-clear-filters"
               >
-                {t("clearFilters")}
+                {t("clearFilters") || "Clear Filters"}
               </Button>
             </GlassCard>
           </aside>
@@ -144,10 +257,15 @@ export default function Search() {
           <main className="flex-1">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold">{t("searchResults")}</h2>
+                <h2 className="text-2xl font-bold">{t("searchResults") || "Search Results"}</h2>
                 {query && (
                   <p className="text-muted-foreground">
-                    Showing results for "{query}"
+                    Showing {isLoading ? "..." : products.length} results for "{query}"
+                  </p>
+                )}
+                {imageSearch.isSuccess && !textSearch.isSuccess && (
+                  <p className="text-muted-foreground">
+                    Showing {products.length} results from image search
                   </p>
                 )}
               </div>
@@ -158,22 +276,36 @@ export default function Search() {
                 data-testid="button-show-filters"
               >
                 <SlidersHorizontal className="w-4 h-4 me-2" />
-                {t("filters")}
+                {t("filters") || "Filters"}
               </Button>
             </div>
 
-            {products.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="space-y-4">
+                    <Skeleton className="aspect-square rounded-2xl" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : products.length === 0 ? (
               <EmptyState
                 icon={SearchIcon}
-                title={t("noResults")}
+                title={t("noResults") || "No results found"}
                 description="Try adjusting your filters or search terms"
               />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product: any) => (
+                {products.map((product) => (
                   <ProductTile
                     key={product.id}
-                    {...product}
+                    id={product.id}
+                    title={product.title}
+                    price={product.price}
+                    brandName={product.brandName || undefined}
+                    images={product.images}
                     onClick={() => setLocation(`/product/${product.id}`)}
                   />
                 ))}

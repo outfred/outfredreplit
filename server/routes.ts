@@ -291,17 +291,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }).optional(),
       }).parse(req.body);
 
-      // Simple text search (BM25 would be implemented with pg_trgm or tsvector in production)
-      const products = await storage.listProducts({ search: q, published: true });
+      // Use listProductSummaries for enriched data (includes brandName and normalized price)
+      const productSummaries = await storage.listProductSummaries({ search: q, published: true });
       
       // Apply additional filters
-      let filtered = products;
+      let filtered = productSummaries;
       if (filters) {
         if (filters.priceMin) {
-          filtered = filtered.filter(p => p.priceCents >= filters.priceMin! * 100);
+          filtered = filtered.filter(p => p.price >= filters.priceMin!);
         }
         if (filters.priceMax) {
-          filtered = filtered.filter(p => p.priceCents <= filters.priceMax! * 100);
+          filtered = filtered.filter(p => p.price <= filters.priceMax!);
         }
         if (filters.sizes?.length) {
           filtered = filtered.filter(p => p.sizes?.some(s => filters.sizes!.includes(s)));
@@ -337,9 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageEmbedding = await provider.generateImageEmbedding(req.file.buffer);
       
       // In production, would use pgvector similarity search
-      // For now, return sample results
-      const products = await storage.listProducts({ published: true });
-      const results = products.slice(0, 10);
+      // For now, return sample results using ProductSummary for consistency
+      const productSummaries = await storage.listProductSummaries({ published: true });
+      const results = productSummaries.slice(0, 10);
 
       res.json({ results, count: results.length });
     } catch (error: any) {

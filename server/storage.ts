@@ -264,7 +264,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(products.published, filters.published));
     }
     if (filters?.search) {
-      conditions.push(like(products.title, `%${filters.search}%`));
+      conditions.push(sql`${products.title} ILIKE ${'%' + filters.search + '%'}`);
     }
 
     if (conditions.length > 0) {
@@ -291,7 +291,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(products.published, filters.published));
     }
     if (filters?.search) {
-      conditions.push(like(products.title, `%${filters.search}%`));
+      conditions.push(sql`${products.title} ILIKE ${'%' + filters.search + '%'}`);
     }
 
     const rows = await db
