@@ -37,7 +37,15 @@ export const merchants = pgTable("merchants", {
   ownerUserId: varchar("owner_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   city: text("city").notNull(),
-  socials: jsonb("socials").$type<{ instagram?: string; facebook?: string; website?: string }>(),
+  socials: jsonb("socials").$type<{ 
+    instagram?: string; 
+    facebook?: string; 
+    twitter?: string;
+    tiktok?: string;
+    youtube?: string;
+    linkedin?: string;
+    website?: string;
+  }>(),
   status: merchantStatusEnum("status").notNull().default("pending"),
   logoUrl: text("logo_url"),
   bannerUrl: text("banner_url"),
