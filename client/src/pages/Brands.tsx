@@ -45,7 +45,7 @@ export default function Brands() {
           </div>
         ) : brands.length === 0 ? (
           <EmptyState
-            icon={<Sparkles className="w-16 h-16" />}
+            icon={Sparkles}
             title={language === "ar" ? "لا توجد علامات تجارية" : "No brands found"}
             description={language === "ar" ? "لا توجد علامات تجارية متاحة حالياً" : "No brands available at the moment"}
           />
