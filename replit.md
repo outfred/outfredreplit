@@ -22,39 +22,39 @@
 5. **Performance Tracking**: p95/p99 latency metrics per route (target: <250ms)
 
 ## Recent Changes (November 11, 2025)
-### Completed
-- ✅ Complete database schema with pgvector extension (User, Merchant, Brand, Product, Outfit, Favorite, SystemConfig, Metric, IndexingJob)
-- ✅ Full backend API implementation with 40+ endpoints (auth, products, search, merchants, brands, outfits, favorites, admin)
-- ✅ JWT authentication with role-based access control
-- ✅ AI provider abstraction layer (Local/HuggingFace/OpenAI)
-- ✅ Storage layer with DatabaseStorage implementation
-- ✅ Metrics middleware for API performance tracking
-- ✅ Comprehensive seed data (60+ products, 5 brands, demo users)
-- ✅ README.md and README_AI.md documentation
-- ✅ Navigation fixes (wouter setLocation across all pages)
-- ✅ **SECURITY HARDENING COMPLETE** (architect-approved):
-  - Product ownership enforcement: Merchants auto-assigned merchantId, cannot reassign products
-  - Merchant creation secured: Split into `/api/user/upgrade-to-merchant` (self-upgrade, status="pending") and `/api/admin/merchants` (admin-only)
-  - RBAC boundaries enforced: All endpoints have proper role checks
-  - Input validation: Comprehensive Zod schemas on all routes
-  - Immutable fields protected: Storage layer prevents ID tampering
-  - Owner role protection: Only owner can assign owner role
+### Completed (Session 1)
+- ✅ Complete database schema with pgvector extension
+- ✅ Full backend API (40+ endpoints: auth, products, search, merchants, brands, outfits, favorites, admin)
+- ✅ JWT authentication with role-based access control (RBAC)
+- ✅ Security hardening (architect-approved): ownership enforcement, input validation, immutable fields
+- ✅ Database seeded with 48 products, 5 brands, test users (owner/merchant/user accounts)
+- ✅ **Authentication Integration**:
+  - AuthContext with JWT token management
+  - Protected routes with role checks (user/merchant/admin/owner)
+  - Login/Register pages connected to backend
+  - Proper token refresh and cleanup on failures
+  - Wouter routing with render function compatibility
+- ✅ **Home Page Integration** (architect-approved):
+  - ProductSummary schema for enriched data (price as decimal, brandName from JOIN)
+  - Separate endpoints: `/api/products` (canonical Product) vs `/api/products/summary` (enriched)
+  - Real data from database via TanStack Query
+  - Loading skeletons and error states with retry
+  - E2E test verified: products display correctly with prices (e.g., "599 EGP")
 
 ## Current Status
 - **Server**: Running on port 5000 ✅
-- **Database**: Schema pushed, ready for seeding
-- **Frontend**: All components built, routing configured
-- **Backend**: All API routes implemented with production-grade security ✅
-- **Documentation**: Complete user + developer guides
-- **Security**: Architect-approved, production-ready ✅
+- **Database**: Seeded with 48 products, 5 brands ✅
+- **Frontend**: Home page fully integrated, other pages have UI but use mock data
+- **Backend**: All API routes implemented and tested ✅
+- **Authentication**: Complete with protected routes and RBAC ✅
+- **Integration Progress**: 3/8 tasks complete
 
-## Next Steps
-1. Run seed data: `npm run db:seed`
-2. Test complete user journey
-3. Add comprehensive integration tests for RBAC paths
-4. Document self-upgrade merchant flow in admin guide
-5. Test RTL/LTR switching
-6. Performance optimization (ensure p95 < 250ms)
+## Next Steps (Task 4+)
+1. **Search & Product Pages**: Connect to hybrid search API, wire product detail endpoint, implement favorites, add related products
+2. **User Profiles & Outfits**: Integrate outfit builder with CRUD API, AI suggestions, auth-protected actions
+3. **Merchant Dashboard**: Product CRUD with ownership, CSV import, analytics, indexing trigger
+4. **Admin Dashboard**: User/merchant management, AI config, metrics, merchant approval
+5. **Polish & Testing**: Comprehensive E2E tests, RTL/LTR verification, performance optimization (<250ms p95)
 
 ## Running the Project
 ```bash
