@@ -29,7 +29,7 @@ export default function Profile() {
 
   // Fetch user's favorites from API (cache isolated by user ID)
   const { data: favoritesData, isLoading: favoritesLoading } = useQuery<ProductSummary[]>({
-    queryKey: ["/api/favorites", user?.id],
+    queryKey: ["/api/favorites"],
     enabled: !!user,
   });
   

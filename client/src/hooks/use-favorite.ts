@@ -33,7 +33,7 @@ export function useFavorite(productId: string) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["/api/favorites", productId] }),
-        queryClient.refetchQueries({ queryKey: ["/api/favorites", user?.id] })
+        queryClient.refetchQueries({ queryKey: ["/api/favorites"] })
       ]);
       toast({
         title: language === "ar" ? "تمت الإضافة إلى المفضلة" : "Added to favorites",
@@ -56,7 +56,7 @@ export function useFavorite(productId: string) {
     onSuccess: async () => {
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["/api/favorites", productId] }),
-        queryClient.refetchQueries({ queryKey: ["/api/favorites", user?.id] })
+        queryClient.refetchQueries({ queryKey: ["/api/favorites"] })
       ]);
       toast({
         title: language === "ar" ? "تمت الإزالة من المفضلة" : "Removed from favorites",
