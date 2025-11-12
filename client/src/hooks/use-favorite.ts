@@ -30,9 +30,11 @@ export function useFavorite(productId: string) {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/favorites", { productId });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", productId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", user?.id] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/favorites", productId] }),
+        queryClient.refetchQueries({ queryKey: ["/api/favorites", user?.id] })
+      ]);
       toast({
         title: language === "ar" ? "تمت الإضافة إلى المفضلة" : "Added to favorites",
       });
@@ -51,9 +53,11 @@ export function useFavorite(productId: string) {
     mutationFn: async () => {
       return await apiRequest("DELETE", `/api/favorites/${productId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", productId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/favorites", user?.id] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/favorites", productId] }),
+        queryClient.refetchQueries({ queryKey: ["/api/favorites", user?.id] })
+      ]);
       toast({
         title: language === "ar" ? "تمت الإزالة من المفضلة" : "Removed from favorites",
       });
