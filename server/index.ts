@@ -9,6 +9,7 @@ import { apiLimiter } from "./middleware/rateLimiter";
 const app = express();
 
 // Security headers
+// CSP is disabled in development to avoid issues with Vite HMR
 app.use(helmet({
   contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
   crossOriginEmbedderPolicy: false,
