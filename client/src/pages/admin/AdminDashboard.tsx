@@ -36,6 +36,7 @@ import {
   Building,
   FileText,
   Loader2,
+  Save,
 } from "lucide-react";
 import {
   Table,
@@ -149,6 +150,42 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/config"],
     enabled: activeView === "config" || activeView === "ai",
   });
+
+  // Configuration State
+  const [configState, setConfigState] = useState({
+    embeddingsProvider: "local" as "local" | "huggingface" | "gemini",
+    imageGenerationProvider: "off" as "off" | "stable-diffusion" | "dalle",
+    enableSpellCorrection: false,
+    enableOutfitAI: false,
+    enableImageSearch: false,
+    enableMultilingual: true,
+    providerKeys: {
+      huggingface: "",
+      gemini: "",
+    },
+    smtpConfig: {
+      host: "",
+      port: 587,
+      user: "",
+      pass: "",
+    },
+  });
+
+  // Load config when data is available
+  useEffect(() => {
+    if (configData) {
+      setConfigState({
+        embeddingsProvider: configData.embeddingsProvider || "local",
+        imageGenerationProvider: configData.imageGenerationProvider || "off",
+        enableSpellCorrection: configData.enableSpellCorrection ?? false,
+        enableOutfitAI: configData.enableOutfitAI ?? false,
+        enableImageSearch: configData.enableImageSearch ?? false,
+        enableMultilingual: configData.enableMultilingual ?? true,
+        providerKeys: configData.providerKeys || { huggingface: "", gemini: "" },
+        smtpConfig: configData.smtpConfig || { host: "", port: 587, user: "", pass: "" },
+      });
+    }
+  }, [configData]);
 
   // Update User Mutation
   const updateUser = useMutation({
@@ -272,6 +309,28 @@ export default function AdminDashboard() {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to send test email. Check SMTP configuration.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Update Config Mutation
+  const updateConfigMutation = useMutation({
+    mutationFn: async (data: typeof configState) => {
+      const res = await apiRequest("PATCH", "/api/admin/config", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/config"] });
+      toast({ 
+        title: t("success"), 
+        description: "Configuration updated successfully" 
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: t("error"), 
+        description: error.message || "Failed to update configuration", 
         variant: "destructive" 
       });
     },
@@ -701,7 +760,13 @@ export default function AdminDashboard() {
               {/* Embeddings Provider */}
               <GlassCard className="p-6">
                 <Label className="mb-3 block">{t("embeddingsProvider")}</Label>
-                <Select defaultValue="local">
+                <Select 
+                  value={configState.embeddingsProvider}
+                  onValueChange={(value) => setConfigState(prev => ({ 
+                    ...prev, 
+                    embeddingsProvider: value as "local" | "huggingface" | "gemini"
+                  }))}
+                >
                   <SelectTrigger data-testid="select-embeddings-provider">
                     <SelectValue />
                   </SelectTrigger>
@@ -716,14 +781,20 @@ export default function AdminDashboard() {
               {/* Image Generation */}
               <GlassCard className="p-6">
                 <Label className="mb-3 block">{t("imageGeneration")}</Label>
-                <Select defaultValue="off">
+                <Select 
+                  value={configState.imageGenerationProvider}
+                  onValueChange={(value) => setConfigState(prev => ({ 
+                    ...prev, 
+                    imageGenerationProvider: value as "off" | "stable-diffusion" | "dalle"
+                  }))}
+                >
                   <SelectTrigger data-testid="select-image-generation">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover/95 backdrop-blur-xl border-popover-border">
-                    <SelectItem value="off">Off</SelectItem>
-                    <SelectItem value="huggingface">Hugging Face (Stable Diffusion)</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="off">Disabled</SelectItem>
+                    <SelectItem value="stable-diffusion">Stable Diffusion</SelectItem>
+                    <SelectItem value="dalle">DALL-E</SelectItem>
                   </SelectContent>
                 </Select>
               </GlassCard>
@@ -732,18 +803,61 @@ export default function AdminDashboard() {
               <GlassCard className="p-6">
                 <h3 className="font-semibold mb-4">{t("featureFlags")}</h3>
                 <div className="space-y-4">
-                  {[
-                    { id: "outfit_ai", label: "Outfit AI" },
-                    { id: "image_search", label: "Image Search" },
-                    { id: "multilingual", label: "Multilingual Support" },
-                    { id: "spell_correction", label: "Spell Correction" },
-                    { id: "analytics_stream", label: "Analytics Stream" },
-                  ].map((flag) => (
-                    <div key={flag.id} className="flex items-center justify-between">
-                      <Label htmlFor={flag.id}>{flag.label}</Label>
-                      <Switch id={flag.id} defaultChecked data-testid={`switch-${flag.id}`} />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="font-medium">Spell Correction</Label>
+                      <p className="text-sm text-muted-foreground">Enable automatic spell checking in search</p>
                     </div>
-                  ))}
+                    <Switch
+                      checked={configState.enableSpellCorrection}
+                      onCheckedChange={(checked) => 
+                        setConfigState(prev => ({ ...prev, enableSpellCorrection: checked }))
+                      }
+                      data-testid="switch-spell-correction"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="font-medium">Outfit AI</Label>
+                      <p className="text-sm text-muted-foreground">Enable AI-powered outfit suggestions</p>
+                    </div>
+                    <Switch
+                      checked={configState.enableOutfitAI}
+                      onCheckedChange={(checked) => 
+                        setConfigState(prev => ({ ...prev, enableOutfitAI: checked }))
+                      }
+                      data-testid="switch-outfit-ai"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="font-medium">Image Search</Label>
+                      <p className="text-sm text-muted-foreground">Enable search by uploading images</p>
+                    </div>
+                    <Switch
+                      checked={configState.enableImageSearch}
+                      onCheckedChange={(checked) => 
+                        setConfigState(prev => ({ ...prev, enableImageSearch: checked }))
+                      }
+                      data-testid="switch-image-search"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="font-medium">Multilingual Support</Label>
+                      <p className="text-sm text-muted-foreground">Enable Arabic/English language switching</p>
+                    </div>
+                    <Switch
+                      checked={configState.enableMultilingual}
+                      onCheckedChange={(checked) => 
+                        setConfigState(prev => ({ ...prev, enableMultilingual: checked }))
+                      }
+                      data-testid="switch-multilingual"
+                    />
+                  </div>
                 </div>
               </GlassCard>
 
@@ -887,20 +1001,58 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="smtp-host">Host</Label>
-                      <Input id="smtp-host" placeholder="smtp.example.com" data-testid="input-smtp-host" />
+                      <Input 
+                        id="smtp-host" 
+                        placeholder="smtp.example.com"
+                        value={configState.smtpConfig.host}
+                        onChange={(e) => setConfigState(prev => ({
+                          ...prev,
+                          smtpConfig: { ...prev.smtpConfig, host: e.target.value }
+                        }))}
+                        data-testid="input-smtp-host" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="smtp-port">Port</Label>
-                      <Input id="smtp-port" type="number" placeholder="587" data-testid="input-smtp-port" />
+                      <Input 
+                        id="smtp-port" 
+                        type="number" 
+                        placeholder="587"
+                        value={configState.smtpConfig.port}
+                        onChange={(e) => setConfigState(prev => ({
+                          ...prev,
+                          smtpConfig: { ...prev.smtpConfig, port: parseInt(e.target.value) || 587 }
+                        }))}
+                        data-testid="input-smtp-port" 
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="smtp-user">Username</Label>
-                    <Input id="smtp-user" placeholder="user@example.com" data-testid="input-smtp-user" />
+                    <Input 
+                      id="smtp-user" 
+                      placeholder="user@example.com"
+                      value={configState.smtpConfig.user}
+                      onChange={(e) => setConfigState(prev => ({
+                        ...prev,
+                        smtpConfig: { ...prev.smtpConfig, user: e.target.value }
+                      }))}
+                      data-testid="input-smtp-user" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="smtp-pass">Password</Label>
-                    <Input id="smtp-pass" type="password" placeholder="••••••••" data-testid="input-smtp-pass" />
+                    <Input 
+                      id="smtp-pass" 
+                      type="password" 
+                      placeholder="••••••••"
+                      value={configState.smtpConfig.pass}
+                      onChange={(e) => setConfigState(prev => ({
+                        ...prev,
+                        smtpConfig: { ...prev.smtpConfig, pass: e.target.value }
+                      }))}
+                      data-testid="input-smtp-pass" 
+                    />
                   </div>
                   
                   {/* Test Email Section */}
@@ -936,18 +1088,54 @@ export default function AdminDashboard() {
                 <h3 className="font-semibold mb-4">Provider API Keys</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="hf-key">Hugging Face API Key</Label>
-                    <Input id="hf-key" type="password" placeholder="hf_••••••••" data-testid="input-hf-key" />
+                    <Label htmlFor="huggingface-key">HuggingFace API Key</Label>
+                    <Input 
+                      id="huggingface-key" 
+                      type="password" 
+                      placeholder="hf_••••••••"
+                      value={configState.providerKeys.huggingface}
+                      onChange={(e) => setConfigState(prev => ({
+                        ...prev,
+                        providerKeys: { ...prev.providerKeys, huggingface: e.target.value }
+                      }))}
+                      data-testid="input-huggingface-key" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="gemini-key">Gemini API Key</Label>
-                    <Input id="gemini-key" type="password" placeholder="AI••••••••" data-testid="input-gemini-key" />
+                    <Input 
+                      id="gemini-key" 
+                      type="password" 
+                      placeholder="AI••••••••"
+                      value={configState.providerKeys.gemini}
+                      onChange={(e) => setConfigState(prev => ({
+                        ...prev,
+                        providerKeys: { ...prev.providerKeys, gemini: e.target.value }
+                      }))}
+                      data-testid="input-gemini-key" 
+                    />
                   </div>
                 </div>
               </GlassCard>
 
-              <GlowButton variant="primary" className="w-full" data-testid="button-save-config">
-                Save Configuration
+              <GlowButton 
+                variant="primary" 
+                className="w-full"
+                onClick={() => updateConfigMutation.mutate(configState)}
+                disabled={updateConfigMutation.isPending || configLoading}
+                data-testid="button-save-config"
+              >
+                {updateConfigMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin me-2" />
+                    Saving Configuration...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 me-2" />
+                    Save Configuration
+                  </>
+                )}
               </GlowButton>
             </div>
           </div>
